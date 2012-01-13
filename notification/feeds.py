@@ -9,8 +9,13 @@ from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 
-from notification.models import Notice
 from notification.atomformat import Feed
+
+# FIXME
+# imported the website's backend model here. We should see how to properly
+# integrate the feed with the website backend. Maybe the feed becomes another
+# backend ??
+from notification.backends.website import Notice
 
 
 ITEMS_PER_FEED = getattr(settings, "ITEMS_PER_FEED", 20)

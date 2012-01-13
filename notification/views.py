@@ -10,7 +10,7 @@ from notification.models import *
 from notification.decorators import basic_auth_required, simple_basic_auth_callback
 from notification.feeds import NoticeUserFeed
 
-
+#FIXME
 @basic_auth_required(realm="Notices Feed", callback_func=simple_basic_auth_callback)
 def feed_for_user(request):
     """

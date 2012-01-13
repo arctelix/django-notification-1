@@ -9,6 +9,7 @@ from base import BaseBackend
 # mostly for backend compatibility
 default_backends = (
     ("email", "notification.backends.email.EmailBackend"),
+    ("website", "notification.backends.website.WebsiteBackend"),
 )
 
 def load_backends():
@@ -26,6 +27,7 @@ def load_backends():
         try:
             # import the module and get the module from sys.modules
             __import__(backend_mod)
+
             mod = sys.modules[backend_mod]
         except ImportError, e:
             raise exceptions.ImproperlyConfigured, 'Error importing notification backend %s: "%s"' % (backend_mod, e)
