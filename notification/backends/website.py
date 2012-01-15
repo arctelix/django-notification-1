@@ -20,8 +20,6 @@ class NoticeManager(models.Manager):
             qs = qs.filter(archived=archived)
         if unseen is not None:
             qs = qs.filter(unseen=unseen)
-        if on_site is not None:
-            qs = qs.filter(on_site=on_site)
         return qs
     
     def unseen_count_for(self, recipient, **kwargs):
@@ -56,7 +54,15 @@ class Notice(models.Model):
     def archive(self):
         self.archived = True
         self.save()
-    
+
+    def render(self, template = 'website.html'):
+        """
+        Render the notification with the given template.
+        """
+        return backends.format_notification(template,
+                                            self.notice_type.label,
+                                            self.data)
+
     def is_unseen(self):
         """
         returns value of self.unseen but also changes it to false.

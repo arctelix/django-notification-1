@@ -11,10 +11,3 @@ includes:
  * Submission of notification messages by other apps.
  * Notification messages on signing in.
  * Notification messages via email (configurable by user).
- * Notification messages via feed.
-
-Contents:
-
-.. toctree::
-
-    usage

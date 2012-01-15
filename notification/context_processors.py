@@ -1,10 +1,9 @@
-from notification.models import Notice
-
+from notification.backends.website import Notice
 
 def notification(request):
     if request.user.is_authenticated():
         return {
-            "notice_unseen_count": Notice.objects.unseen_count_for(request.user, on_site=True),
+            "notice_unseen_count": Notice.objects.unseen_count_for(request.user)
         }
     else:
         return {}

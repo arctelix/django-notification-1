@@ -80,13 +80,22 @@ class NoticeSetting(models.Model):
         verbose_name_plural = _("notice settings")
         unique_together = ("user", "notice_type", "medium")
 
-def should_send(user, notice_type, medium):
+def get_notification_setting(user, notice_type, medium):
     try:
         return NoticeSetting.objects.get(user = user,
                                          notice_type = notice_type,
-                                         medium = medium).send
+                                         medium = medium)
     except NoticeSetting.DoesNotExist:
-        return NOTICE_MEDIA_DEFAULTS[medium] <= notice_type.default
+        send = NOTICE_MEDIA_DEFAULTS[medium] <= notice_type.default
+
+        return NoticeSetting.objects.create(user = user,
+                                            notice_type = notice_type,
+                                            medium = medium,
+                                            send = send)
+                    
+def should_send(user, notice_type, medium):
+    return get_notification_setting(user, notice_type, medium).send
+
 
 class LanguageStoreNotAvailable(Exception):
     pass
@@ -203,13 +212,15 @@ def stop_observing(observed, observer, label):
     observed_item = ObservedItem.objects.get_for(observed, observer, label)
     observed_item.delete()
 
-def send_observation_notices_for(observed, label, extra_context={}):
+def send_observation_notices_for(observed, label, extra_context={}, 
+                                 exclude=[]):
     """
     Send a Notice for each user observing this label at the observed object.
     """
     observations = Observation.objects.all_for(observed, label)
     for observation in observations:
-        observation.send_notice(extra_context)
+        if observation.user not in exclude:
+            observation.send_notice(extra_context)
 
 def is_observing(observed, observer, label):
     if observer.is_anonymous(): return False

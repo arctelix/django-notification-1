@@ -1,11 +1,11 @@
+This application lets you notify users of events.
 
-Many sites need to notify users when certain events have occurred and to allow
-configurable options as to how those notifications are to be received.
+#TODO Explain user cases and features:
+* Delivery methods : 
+    bulk-notifications
+    per-subscription
+    backends
+    delivery settings for each backend/notification type
 
-The project aims to provide a Django app for this sort of functionality. This
-includes:
+#TODO Provide code samples
 
- * submission of notification messages by other apps
- * notification messages on signing in
- * notification messages via email (configurable by user)
- * notification messages via feed

@@ -6,6 +6,20 @@ from django.core import exceptions
 
 from base import BaseBackend
 
+from django.template.loader import render_to_string
+from django.template import Context
+
+def format_notification(template, label, context):
+    '''
+    Formats a notification to a specific template format.
+    '''
+    # conditionally turn off autoescaping for .txt extensions in format
+    if template.endswith(".txt"):
+       context.autoescape = False
+    return render_to_string(("notification/%s/%s" % (label, template),
+                             "notification/default/%s" % template),
+                            context_instance=Context(context))
+
 # mostly for backend compatibility
 default_backends = (
     ("email", "notification.backends.email.EmailBackend"),

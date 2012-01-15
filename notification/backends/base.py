@@ -1,6 +1,3 @@
-
-from django.template.loader import render_to_string
-
 class BaseBackend(object):
     """
     The base backend.
@@ -26,17 +23,3 @@ class BaseBackend(object):
         """
         raise NotImplemented()
     
-    def get_formatted_messages(self, formats, label, context):
-        """
-        Returns a dictionary with the format identifier as the key. The values are
-        are fully rendered templates with the given context.
-        """
-        format_templates = {}
-        for format in formats:
-            # conditionally turn off autoescaping for .txt extensions in format
-            if format.endswith(".txt"):
-                context.autoescape = False
-            format_templates[format] = render_to_string((
-                "notification/%s/%s" % (label, format),
-                "notification/%s" % format), context_instance=context)
-        return format_templates

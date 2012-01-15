@@ -4,38 +4,20 @@ from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.syndication.views import feed
 
-from notification.models import *
-from notification.decorators import basic_auth_required, simple_basic_auth_callback
-from notification.feeds import NoticeUserFeed
+from notification.models import (NoticeType, NOTICE_MEDIA,
+                                 get_notification_setting)
 
-#FIXME
-@basic_auth_required(realm="Notices Feed", callback_func=simple_basic_auth_callback)
-def feed_for_user(request):
-    """
-    An atom feed for all unarchived :model:`notification.Notice`s for a user.
-    """
-    url = "feed/%s" % request.user.username
-    return feed(request, url, {
-        "feed": NoticeUserFeed,
-    })
+#FIXME dinamically import this
+from notification.backends.website import Notice
 
 
 @login_required
 def notices(request):
     """
     The main notices index view.
-    
-    Template: :template:`notification/notices.html`
-    
-    Context:
-    
-        notices
-            A list of :model:`notification.Notice` objects that are not archived
-            and to be displayed on the site.
     """
-    notices = Notice.objects.notices_for(request.user, on_site=True)
+    notices = Notice.objects.notices_for(request.user)
     
     return render_to_response("notification/notices.html", {
         "notices": notices,
@@ -68,7 +50,9 @@ def notice_settings(request):
         settings_row = []
         for medium_id, medium_display in NOTICE_MEDIA:
             form_label = "%s_%s" % (notice_type.label, medium_id)
-            setting = get_notification_setting(request.user, notice_type, medium_id)
+            setting = get_notification_setting(request.user,
+                                               notice_type,
+                                               medium_id)
             if request.method == "POST":
                 if request.POST.get(form_label) == "on":
                     if not setting.send:
@@ -192,3 +176,18 @@ def mark_all_seen(request):
         notice.unseen = False
         notice.save()
     return HttpResponseRedirect(reverse("notification_notices"))
+
+#FIXME
+#from notification.feeds import NoticeUserFeed
+#from django.contrib.syndication.views import feed
+#from notification.decorators import basic_auth_required, simple_basic_auth_callback
+#@basic_auth_required(realm="Notices Feed",
+#                     callback_func=simple_basic_auth_callback)
+#def feed_for_user(request):
+#    """
+#    An atom feed for all unarchived :model:`notification.Notice`s for a user.
+#    """
+#    url = "feed/%s" % request.user.username
+#    return feed(request, url, {
+#        "feed": NoticeUserFeed,
+#    })

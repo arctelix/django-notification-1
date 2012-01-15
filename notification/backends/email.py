@@ -40,17 +40,17 @@ class EmailBackend(backends.BaseBackend):
         })
         context.update(extra_context)
         
-        messages = self.get_formatted_messages((
-            "short.txt",
-            "full.txt"
-        ), notice_type.label, context)
+        subject = backends.format_notification("short.txt",
+                                                notice_type.label,
+                                                context)
+        message = backends.format_notification("full.txt",
+                                      notice_type.label,
+                                      context)
         
-        subject = "".join(render_to_string("notification/email_subject.txt", {
-            "message": messages["short.txt"],
-        }, context).splitlines())
+        subject = render_to_string("notification/email_subject.txt",
+                                  {"message": subject}, context)
         
-        body = render_to_string("notification/email_body.txt", {
-            "message": messages["full.txt"],
-        }, context)
+        body = render_to_string("notification/email_body.txt",
+                                {"message": message}, context)
         
         send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [recipient.email])
