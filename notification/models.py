@@ -161,7 +161,7 @@ class ObservedItemManager(models.Manager):
         observation = self.get(content_type=content_type,
                                object_id = observed.id,
                                user = observer,
-                               label = label)
+                               notice_type__label = label)
         return observation
 
 
@@ -179,6 +179,9 @@ class Observation(models.Model):
     object_id = models.PositiveIntegerField()                                   
     observed_object = generic.GenericForeignKey("content_type", "object_id") 
 
+    class meta:
+        unique_toguether = ('user', 'notice_type', 'content_type', 'object_id')
+
     def send_notice(self, extra_context=None):
         if extra_context is None:
             extra_context = {}
@@ -193,17 +196,17 @@ class Observation(models.Model):
         verbose_name = _("observed item")
         verbose_name_plural = _("observed items")
     
-def observe(observed, observer, notice_type_label):
+def observe(observed, observer, label):
     """
     Create a new Observation
     To be used by applications to register a user as an observer for some object.
     """
-    notice_type = NoticeType.objects.get(label=notice_type_label)
-    observed_item = Observation(user=observer,
-                                observed_object=observed,
-                                notice_type=notice_type)
-    observed_item.save()
-    return observed_item
+    if not is_observing(observed, observer, label):
+        notice_type = NoticeType.objects.get(label=label)
+        observed_item = Observation(user=observer,
+                                    observed_object=observed,
+                                    notice_type=notice_type)
+        observed_item.save()
 
 def stop_observing(observed, observer, label):
     """
@@ -225,10 +228,10 @@ def send_observation_notices_for(observed, label, extra_context={},
 def is_observing(observed, observer, label):
     if observer.is_anonymous(): return False
     try:
-        ObservedItem.objects.get_for(observed, observer, label)
+        Observation.objects.get_for(observed, observer, label)
         return True
-    except ObservedItem.DoesNotExist:
+    except Observation.DoesNotExist:
         return False
-    except ObservedItem.MultipleObjectsReturned:
+    except Observation.MultipleObjectsReturned:
         return True
 
