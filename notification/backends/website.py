@@ -59,6 +59,7 @@ class Notice(models.Model):
         """
         Render the notification with the given template.
         """
+        self.data.update({'self':self})
         return backends.format_notification(template,
                                             self.notice_type.label,
                                             self.data)
