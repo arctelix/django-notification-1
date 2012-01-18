@@ -196,17 +196,20 @@ class Observation(models.Model):
         verbose_name = _("observed item")
         verbose_name_plural = _("observed items")
     
-def observe(observed, observer, label):
+def observe(observed, observer, labels):
     """
     Create a new Observation
     To be used by applications to register a user as an observer for some object.
     """
-    if not is_observing(observed, observer, label):
-        notice_type = NoticeType.objects.get(label=label)
-        observed_item = Observation(user=observer,
-                                    observed_object=observed,
-                                    notice_type=notice_type)
-        observed_item.save()
+    if not isinstance(labels, list):
+        labels = [labels]
+    for label in labels:
+        if not is_observing(observed, observer, label):
+            notice_type = NoticeType.objects.get(label=label)
+            observed_item = Observation(user=observer,
+                                        observed_object=observed,
+                                        notice_type=notice_type)
+            observed_item.save()
 
 def stop_observing(observed, observer, label):
     """
