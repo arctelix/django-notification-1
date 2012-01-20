@@ -15,7 +15,7 @@ def format_notification(template, label, context):
     '''
     # conditionally turn off autoescaping for .txt extensions in format
     if template.endswith(".txt"):
-       context.autoescape = False
+        context.autoescape = False
     return render_to_string(("notification/%s/%s" % (label, template),
                              "notification/default/%s" % template),
                             context_instance=Context(context))

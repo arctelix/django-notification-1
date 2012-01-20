@@ -211,12 +211,17 @@ def observe(observed, observer, labels):
                                         notice_type=notice_type)
             observed_item.save()
 
-def stop_observing(observed, observer, label):
+def stop_observing(observed, observer, labels):
     """
     Remove an Observation
     """
-    observed_item = ObservedItem.objects.get_for(observed, observer, label)
-    observed_item.delete()
+    if not isinstance(labels, list):
+        labels = [labels]
+    for label in labels:
+        try:
+            Observation.objects.get_for(observed, observer, label).delete()
+        except Observation.DoesNotExist:
+            pass
 
 def send_observation_notices_for(observed, label, extra_context={}, 
                                  exclude=[]):
@@ -228,13 +233,15 @@ def send_observation_notices_for(observed, label, extra_context={},
         if observation.user not in exclude:
             observation.send_notice(extra_context)
 
-def is_observing(observed, observer, label):
+def is_observing(observed, observer, labels):
     if observer.is_anonymous(): return False
-    try:
-        Observation.objects.get_for(observed, observer, label)
-        return True
-    except Observation.DoesNotExist:
-        return False
-    except Observation.MultipleObjectsReturned:
-        return True
-
+    if not isinstance(labels, list):
+        labels = [labels]
+    for label in labels:
+        try:
+            Observation.objects.get_for(observed, observer, label)
+        except Observation.DoesNotExist:
+            return False
+        except Observation.MultipleObjectsReturned:
+            pass
+    return True
