@@ -176,18 +176,3 @@ def mark_all_seen(request):
         notice.unseen = False
         notice.save()
     return HttpResponseRedirect(reverse("notification_notices"))
-
-#FIXME
-#from notification.feeds import NoticeUserFeed
-#from django.contrib.syndication.views import feed
-#from notification.decorators import basic_auth_required, simple_basic_auth_callback
-#@basic_auth_required(realm="Notices Feed",
-#                     callback_func=simple_basic_auth_callback)
-#def feed_for_user(request):
-#    """
-#    An atom feed for all unarchived :model:`notification.Notice`s for a user.
-#    """
-#    url = "feed/%s" % request.user.username
-#    return feed(request, url, {
-#        "feed": NoticeUserFeed,
-#    })

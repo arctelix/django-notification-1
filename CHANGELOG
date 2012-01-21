@@ -1,4 +1,19 @@
+
 BI = backward incompatible change
+
+0.2.alpha
+---------
+
+This version of django-notification was heavily adapted to be simpler and
+is completely backward incmpatible.
+
+Main changes include : 
+ * Removing rss feed supoort
+ * Adding the website backend
+ * Reformolated functions to observe objects
+ * Removed special template syntax (now using picklefiled to store objects
+        directly to the notification's context)
+ * Removed assync notification delivery ( TODO this with celery efficiently) 
 
 0.2.0
 -----

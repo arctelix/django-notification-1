@@ -100,4 +100,3 @@ class WebsiteBackend(backends.BaseBackend):
                               sender = sender,
                               data = extra_context,
                               notice_type = notice_type)
-

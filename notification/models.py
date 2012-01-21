@@ -16,7 +16,8 @@ class NoticeType(models.Model):
     label = models.CharField(_("label"), max_length=40)
     display = models.CharField(_("display"), max_length=50)
     description = models.CharField(_("description"), max_length=100)
-    # by default only on for media with sensitivity less than or equal to this number
+    # The nitice of this type will only get sent using a medium with span
+    # sensitivity less than or equal than this number.
     default = models.IntegerField(_("default"))
     
     def __unicode__(self):
@@ -35,11 +36,10 @@ NOTICE_MEDIA_DEFAULTS = {key[0] : backend.spam_sensitivity for key,backend in \
                                                  NOTIFICATION_BACKENDS.items()}
 
 def create_notice_type(label, display, description, default=2, verbosity=1):
-    """
+    '''
     Creates a new NoticeType.
-    
     This is intended to be used by other apps as a post_syncdb manangement step.
-    """
+    '''
     try:
         notice_type = NoticeType.objects.get(label=label)
         updated = False
@@ -65,10 +65,10 @@ def create_notice_type(label, display, description, default=2, verbosity=1):
             print "Created %s NoticeType" % label
 
 class NoticeSetting(models.Model):
-    """
-    Indicates, for a given user, whether to send notifications
+    '''
+    Object that indicates, for a given user, whether to send notifications
     of a given NoticeType using a given medium.
-    """
+    '''
     
     user = models.ForeignKey(User, verbose_name=_("user"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
@@ -96,20 +96,19 @@ def get_notification_setting(user, notice_type, medium):
 def should_send(user, notice_type, medium):
     return get_notification_setting(user, notice_type, medium).send
 
-
 class LanguageStoreNotAvailable(Exception):
     pass
 
 def get_notification_language(user):
-    """
+    '''
     Returns site-specific notification language for this user. Raises
     LanguageStoreNotAvailable if this site does not use translated
     notifications.
-    """
+    '''
     if getattr(settings, "NOTIFICATION_LANGUAGE_MODULE", False):
         try:
-            app_label, model_name = settings.NOTIFICATION_LANGUAGE_MODULE.split(".")
-            model = models.get_model(app_label, model_name)
+            app_lbl, model_nm = settings.NOTIFICATION_LANGUAGE_MODULE.split(".")
+            model = models.get_model(app_lbl, model_nm)
             language_model = model._default_manager.get(user__id__exact=user.id)
             if hasattr(language_model, "language"):
                 return language_model.language
@@ -118,11 +117,11 @@ def get_notification_language(user):
     raise LanguageStoreNotAvailable
 
 def send(users, label, extra_context={}, sender=None):
-    """
+    '''
     Creates a new notice.
     This is intended to be how other apps create new notices:
     notification.send(user, "friends_invite_sent", {"foo": "bar"})
-    """
+    '''
     notice_type = NoticeType.objects.get(label=label)
     current_language = get_language()
 
@@ -142,10 +141,10 @@ def send(users, label, extra_context={}, sender=None):
 class ObservedItemManager(models.Manager):
     
     def all_for(self, observed, label):
-        """
+        '''
         Returns all ObservedItems for an observed object (everything obserting
         the object)
-        """
+        '''
         content_type = ContentType.objects.get_for_model(observed)
         observations = self.filter(content_type=content_type,
                                    object_id=observed.id,
@@ -153,10 +152,10 @@ class ObservedItemManager(models.Manager):
         return observations
     
     def get_for(self, observed, observer, label):
-        """
+        '''
         Returns an observation relationship between observer and observed,
         using the notification type of the given label
-        """
+        '''
         content_type = ContentType.objects.get_for_model(observed)
         observation = self.get(content_type=content_type,
                                object_id = observed.id,
@@ -166,10 +165,10 @@ class ObservedItemManager(models.Manager):
 
 
 class Observation(models.Model):
-    """
+    '''
     This works like a many to many table, defining observation relationships 
     between observers and observed objects.
-    """
+    '''
     user = models.ForeignKey(User, verbose_name=_("user"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
     added = models.DateTimeField(_("added"), auto_now = True)
@@ -197,10 +196,11 @@ class Observation(models.Model):
         verbose_name_plural = _("observed items")
     
 def observe(observed, observer, labels):
-    """
+    '''
     Create a new Observation
-    To be used by applications to register a user as an observer for some object.
-    """
+    To be used by applications to register a user as an observer for some
+    object.
+    '''
     if not isinstance(labels, list):
         labels = [labels]
     for label in labels:
@@ -212,9 +212,9 @@ def observe(observed, observer, labels):
             observed_item.save()
 
 def stop_observing(observed, observer, labels):
-    """
+    '''
     Remove an Observation
-    """
+    '''
     if not isinstance(labels, list):
         labels = [labels]
     for label in labels:
@@ -225,9 +225,9 @@ def stop_observing(observed, observer, labels):
 
 def send_observation_notices_for(observed, label, extra_context={}, 
                                  exclude=[]):
-    """
+    '''
     Send a Notice for each user observing this label at the observed object.
-    """
+    '''
     observations = Observation.objects.all_for(observed, label)
     for observation in observations:
         if observation.user not in exclude:

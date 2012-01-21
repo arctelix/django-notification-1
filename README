@@ -1,11 +1,15 @@
 This application lets you notify users of events.
 
-#TODO Explain user cases and features:
-* Delivery methods : 
-    bulk-notifications
-    per-subscription
-    backends
-    delivery settings for each backend/notification type
+Simple user case: 
 
-#TODO Provide code samples
-
+1. Create notification types in your database, in the management.py
+    # FIXME show here how to do this
+2. Make some users observe the notification_type you created from some emitter
+    # FIXME show here how to do this
+3. Send the notifications to users who are observing the sender. 
+    # FIXME show here how to do this
+4. Change the templates for each notification type to send personalized
+    notifications.
+    # FIXME show here how to do this
+5. Display the notifications to the user
+    # FIXME show here how to do this
