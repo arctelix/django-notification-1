@@ -21,7 +21,19 @@ class NoticeManager(models.Manager):
         if unseen is not None:
             qs = qs.filter(unseen=unseen)
         return qs
-    
+   
+    def mark_read(self, sender, receiver):
+        '''
+        Marks all notifications emitted by the sender to the receiver as read.
+        This function is tipically called when the receiver views the sender,
+        so the notification about the sender isn't "fresh" anymore.
+        '''
+        ctype = ContentType.objects.get_for_model(sender)
+        for n in self.filter(content_type=ctype, object_id=sender.id,
+                             recipient=receiver):
+            n.unseen = False
+            n.save()
+
     def unseen_count_for(self, recipient, **kwargs):
         """
         returns the number of unseen notices for the given user.
