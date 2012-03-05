@@ -10,7 +10,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.contrib.sites.models import Site
 
 from notification import backends
-from notification.message import message_to_text
 
 
 class EmailBackend(backends.BaseBackend):
@@ -40,15 +39,15 @@ class EmailBackend(backends.BaseBackend):
         })
         context.update(extra_context)
         
-        subject = backends.format_notification("short.txt",
-                                                notice_type.label,
-                                                context)
+        short = backends.format_notification("short.txt",
+                                             notice_type.label,
+                                             context)
         message = backends.format_notification("full.txt",
-                                      notice_type.label,
-                                      context)
+                                               notice_type.label,
+                                               context)
         
         subject = render_to_string("notification/email_subject.txt",
-                                  {"message": subject}, context)
+                                  {"message": short}, context)
         
         body = render_to_string("notification/email_body.txt",
                                 {"message": message}, context)
