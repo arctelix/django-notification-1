@@ -8,7 +8,7 @@ from notification.models import NoticeType
 from notification import backends
 
 class NoticeManager(models.Manager):
-    
+
     def notices_for(self, user, archived=False, unseen=None):
         """
         returns Notice objects for the given user.
@@ -21,13 +21,14 @@ class NoticeManager(models.Manager):
         if unseen is not None:
             qs = qs.filter(unseen=unseen)
         return qs
-   
+
     def mark_read(self, sender, receiver):
         '''
         Marks all notifications emitted by the sender to the receiver as read.
         This function is tipically called when the receiver views the sender,
         so the notification about the sender isn't "fresh" anymore.
         '''
+        if receiver.is_anonymous(): return
         ctype = ContentType.objects.get_for_model(sender)
         for n in self.filter(content_type=ctype, object_id=sender.id,
                              recipient=receiver):

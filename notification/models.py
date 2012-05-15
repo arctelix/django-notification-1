@@ -7,7 +7,6 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 import settings
 
-
 class NoticeType(models.Model):
     '''
     Stores a Notice class. Every notification sent out must belong to a
@@ -19,10 +18,10 @@ class NoticeType(models.Model):
     # The nitice of this type will only get sent using a medium with span
     # sensitivity less than or equal than this number.
     default = models.IntegerField(_("default"))
-    
+
     def __unicode__(self):
         return self.label
-    
+
     class Meta:
         verbose_name = _("notice type")
         verbose_name_plural = _("notice types")
@@ -69,12 +68,12 @@ class NoticeSetting(models.Model):
     Object that indicates, for a given user, whether to send notifications
     of a given NoticeType using a given medium.
     '''
-    
+
     user = models.ForeignKey(User, verbose_name=_("user"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
     medium = models.CharField(_("medium"), max_length=1, choices=NOTICE_MEDIA)
     send = models.BooleanField(_("send"))
-    
+
     class Meta:
         verbose_name = _("notice setting")
         verbose_name_plural = _("notice settings")
@@ -92,7 +91,7 @@ def get_notification_setting(user, notice_type, medium):
                                             notice_type = notice_type,
                                             medium = medium,
                                             send = send)
-                    
+
 def should_send(user, notice_type, medium):
     return get_notification_setting(user, notice_type, medium).send
 
@@ -130,17 +129,17 @@ def send(users, label, extra_context={}, sender=None):
             activate(get_notification_language(user))
         except LanguageStoreNotAvailable:
             pass
-        
+
         for backend in NOTIFICATION_BACKENDS.values():
             if backend.can_send(user, notice_type):
                 backend.deliver(user, sender, notice_type, extra_context)
-    
+
     # reset environment to original language
     activate(current_language)
 
 class ObservedItemManager(models.Manager):
-    
-    def all_for(self, observed, label):
+
+    def observers(self, observed, label):
         '''
         Returns all ObservedItems for an observed object (everything obserting
         the object)
@@ -150,7 +149,7 @@ class ObservedItemManager(models.Manager):
                                    object_id=observed.id,
                                    notice_type__label=label)
         return observations
-    
+
     def get_for(self, observed, observer, label):
         '''
         Returns an observation relationship between observer and observed,
@@ -174,8 +173,8 @@ class Observation(models.Model):
     added = models.DateTimeField(_("added"), auto_now = True)
     objects = ObservedItemManager()
     # Polymorphic relation to allow any object to be observed
-    content_type = models.ForeignKey(ContentType)                               
-    object_id = models.PositiveIntegerField()                                   
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
     observed_object = generic.GenericForeignKey("content_type", "object_id") 
 
     class meta:
@@ -194,7 +193,7 @@ class Observation(models.Model):
         ordering = ["-added"]
         verbose_name = _("observed item")
         verbose_name_plural = _("observed items")
-    
+
 def observe(observed, observer, labels):
     '''
     Create a new Observation
@@ -228,7 +227,7 @@ def send_observation_notices_for(observed, label, extra_context={},
     '''
     Send a Notice for each user observing this label at the observed object.
     '''
-    observations = Observation.objects.all_for(observed, label)
+    observations = Observation.objects.observers(observed, label)
     for observation in observations:
         if observation.user not in exclude:
             observation.send_notice(extra_context)
@@ -245,3 +244,16 @@ def is_observing(observed, observer, labels):
         except Observation.MultipleObjectsReturned:
             pass
     return True
+
+def get_observations(observer, observed_type, labels):
+    if observer.is_anonymous(): return []
+    if not isinstance(labels, list):
+        labels = [labels]
+    elements = set()
+    for label in labels:
+        content_type = ContentType.objects.get_for_model(observed_type)
+        for x in Observation.objects.filter(user=observer,
+                                            notice_type__label__in=labels,
+                                            content_type=content_type):
+            elements.add(x.observed_object)
+    return list(elements)
