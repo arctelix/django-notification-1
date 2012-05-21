@@ -24,10 +24,8 @@ class EmailBackend(backends.BaseBackend):
     def deliver(self, recipient, sender, notice_type, extra_context):
         # TODO: require this to be passed in extra_context
         current_site = Site.objects.get_current()
-        notices_url = u"http://%s%s" % (
-            unicode(Site.objects.get_current()),
-            reverse("notification_notices"),
-        )
+        root_url = "http://%s" % unicode(Site.objects.get_current())
+        notices_url = root_url + reverse("notification_notices")
 
         # update context with user specific translations
         context = Context({
@@ -35,6 +33,7 @@ class EmailBackend(backends.BaseBackend):
             "sender": sender,
             "notice": ugettext(notice_type.display),
             "notices_url": notices_url,
+            "root_url": root_url,
             "current_site": current_site,
         })
         context.update(extra_context)

@@ -55,20 +55,20 @@ class Notice(models.Model):
     data = PickledObjectField()
 
     # Polymorphic relation to allow any object to be the sender
-    content_type = models.ForeignKey(ContentType)                               
-    object_id = models.PositiveIntegerField()                                   
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
     sender = generic.GenericForeignKey("content_type", "object_id") 
 
     objects = NoticeManager()
-    
+
     def __unicode__(self):
         return self.notice_type.display
-    
+
     def archive(self):
         self.archived = True
         self.save()
 
-    def render(self, template = 'website.html'):
+    def render(self, template='website.html'):
         """
         Render the notification with the given template.
         """
@@ -80,7 +80,7 @@ class Notice(models.Model):
     def is_unseen(self):
         """
         returns value of self.unseen but also changes it to false.
-        
+
         Use this in a template to mark an unseen notice differently the first
         time it is shown.
         """
@@ -89,13 +89,12 @@ class Notice(models.Model):
             self.unseen = False
             self.save()
         return unseen
-    
+
     class Meta:
         app_label = 'notification' # needed for syncdb
         ordering = ["-added"]
         verbose_name = _("notice")
         verbose_name_plural = _("notices")
-
 
 
 class WebsiteBackend(backends.BaseBackend):
@@ -104,7 +103,7 @@ class WebsiteBackend(backends.BaseBackend):
     visit the proper notification page.
     """
     spam_sensitivity = 1
-    
+
     def deliver(self, recipient, sender, notice_type, extra_context):
         """
         Just saves the notification to the database, it gets displayed
