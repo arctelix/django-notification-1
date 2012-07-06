@@ -115,6 +115,15 @@ def get_notification_language(user):
             raise LanguageStoreNotAvailable
     raise LanguageStoreNotAvailable
 
+def broadcast(label, extra_context=None, sender=None, exclude=None):
+    '''Brodcasts a notification for all the users on the system.'''
+
+    extra_context = extra_context or {}
+    exclude = exclude or []
+    send_to = set(User.objects.all()) - set(exclude)
+
+    send(send_to, label, extra_context, sender)
+
 def send(users, label, extra_context={}, sender=None):
     '''
     Creates a new notice.
