@@ -1,11 +1,16 @@
+# Django
 from django.db import models
-from picklefield.fields import PickledObjectField
 from django.contrib.auth.models import User 
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType 
 from django.contrib.contenttypes import generic
-from notification.models import NoticeType
+
+# PickleField
+from picklefield.fields import PickledObjectField
+
+# This app
 from notification import backends
+from notification.models import NoticeType
 
 class NoticeManager(models.Manager):
 

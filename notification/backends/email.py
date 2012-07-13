@@ -1,3 +1,4 @@
+# Django
 from django.conf import settings
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
@@ -7,10 +8,11 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext
 from django.core.exceptions import ImproperlyConfigured
 
+# Django Apps
 from django.contrib.sites.models import Site
 
+# This app
 from notification import backends
-
 
 class EmailBackend(backends.BaseBackend):
     spam_sensitivity = 2

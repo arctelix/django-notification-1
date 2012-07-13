@@ -1,3 +1,4 @@
+
 class BaseBackend(object):
     """
     The base backend.
@@ -6,20 +7,20 @@ class BaseBackend(object):
         self.medium_id = medium_id
         if spam_sensitivity is not None:
             self.spam_sensitivity = spam_sensitivity
-    
+
     def can_send(self, user, notice_type):
         """
         Determines whether this backend is allowed to send a notification to
         the given user and notice_type.
         """
+        # XXX should be placed here to avoid circular import dependency
         from notification.models import should_send
         if should_send(user, notice_type, self.medium_id):
             return True
         return False
-    
+
     def deliver(self, recipient, notice_type, extra_context):
         """
         Deliver a notification to the given recipient.
         """
         raise NotImplemented()
-    

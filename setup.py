@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 
-
 setup(
     name="django-notification",
     description="User notification management for the Django web framework",

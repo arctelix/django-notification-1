@@ -1,4 +1,4 @@
-from notification import backends
+# Django
 from django.db import models
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import get_language, activate, ugettext_lazy as _
@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 import settings
+
+# This app
+from notification import backends
 
 class NoticeType(models.Model):
     '''
@@ -124,7 +127,7 @@ def broadcast(label, extra_context=None, sender=None, exclude=None):
 
     send(send_to, label, extra_context, sender)
 
-def send(users, label, extra_context={}, sender=None):
+def send(users, label, extra_context=None, sender=None):
     '''
     Creates a new notice.
     This is intended to be how other apps create new notices:
@@ -132,6 +135,7 @@ def send(users, label, extra_context={}, sender=None):
     '''
     notice_type = NoticeType.objects.get(label=label)
     current_language = get_language()
+    extra_context = extra_context or {}
 
     for user in users:
         try:
@@ -179,7 +183,7 @@ class Observation(models.Model):
     '''
     user = models.ForeignKey(User, verbose_name=_("user"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
-    added = models.DateTimeField(_("added"), auto_now = True)
+    added = models.DateTimeField(_("added"), auto_now=True)
     objects = ObservedItemManager()
     # Polymorphic relation to allow any object to be observed
     content_type = models.ForeignKey(ContentType)
@@ -231,15 +235,17 @@ def stop_observing(observed, observer, labels):
         except Observation.DoesNotExist:
             pass
 
-def send_observation_notices_for(observed, label, extra_context={}, 
-                                 exclude=[]):
+def send_observation_notices_for(observed, label, xcontext=None, exclude=None):
     '''
     Send a Notice for each user observing this label at the observed object.
     '''
+    xcontext = xcontext or {}
+    exclude = exclude or []
+
     observations = Observation.objects.observers(observed, label)
     for observation in observations:
         if observation.user not in exclude:
-            observation.send_notice(extra_context)
+            observation.send_notice(xcontext)
 
 def is_observing(observed, observer, labels):
     if observer.is_anonymous(): return False
@@ -255,7 +261,8 @@ def is_observing(observed, observer, labels):
     return True
 
 def get_observations(observer, observed_type, labels):
-    if observer.is_anonymous(): return []
+    if observer.is_anonymous():
+        return []
     if not isinstance(labels, list):
         labels = [labels]
     elements = set()

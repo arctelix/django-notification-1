@@ -1,28 +1,30 @@
+# Python Core
+from datetime import datetime, timedelta
+
+# Django
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.db.models import Q
 
+# Django Apps
 from django.contrib.auth.decorators import login_required
 
+# This app
+#FIXME dinamically import this
+from notification.backends.website import Notice
 from notification.models import (NoticeType, NOTICE_MEDIA,
                                  get_notification_setting)
 
-from datetime import datetime, timedelta
-
-#FIXME dinamically import this
-from notification.backends.website import Notice
-
-
 @login_required
-def notices(request, show_all=False):
+def notices(request, alln=False):
     """
     The main notices index view.
     """
     notices = Notice.objects.notices_for(request.user)
 
-    if not show_all:
+    if not alln:
         old = datetime.now() - timedelta(days=3)
         latest_notices = notices.filter(Q(unseen=True) |
                                         Q(added__gt=old))
@@ -34,7 +36,7 @@ def notices(request, show_all=False):
 
     return render_to_response("notification/notices.html", {
         "notices": notices,
-        'all': show_all,
+        'all': alln,
     }, context_instance=RequestContext(request))
 
 
