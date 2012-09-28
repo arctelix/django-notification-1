@@ -1,6 +1,7 @@
 # Django
 from django.conf import settings
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+
 from django.core.urlresolvers import reverse
 from django.db.models.loading import get_app
 from django.template import Context
@@ -43,14 +44,26 @@ class EmailBackend(backends.BaseBackend):
         short = backends.format_notification("short.txt",
                                              notice_type.label,
                                              context)
-        message = backends.format_notification("full.txt",
+
+        message_txt = backends.format_notification("full.txt",
+                                                   notice_type.label,
+                                                   context)
+
+        message = backends.format_notification("full.html",
                                                notice_type.label,
                                                context)
 
         subject = render_to_string("notification/email_subject.txt",
                                   {"message": short}, context)
 
-        body = render_to_string("notification/email_body.txt",
+        body = render_to_string("notification/email_body.html",
                                 {"message": message}, context)
 
-        send_mail(subject, body, settings.DEFAULT_FROM_EMAIL, [recipient.email])
+        body_txt = render_to_string("notification/email_body.txt",
+                                    {"message": message_txt}, context)
+
+        msg = EmailMultiAlternatives(subject, body_txt,
+                settings.DEFAULT_FROM_EMAIL, [recipient.email])
+
+        msg.attach_alternative(body, "text/html")
+        msg.send()
