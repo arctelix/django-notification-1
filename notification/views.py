@@ -7,6 +7,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.db.models import Q
+from django.contrib import messages
 
 # Django Apps
 from django.contrib.auth.decorators import login_required
@@ -62,6 +63,7 @@ def notice_settings(request):
     """
     notice_types = NoticeType.objects.all()
     settings_table = []
+    changed = False
     for notice_type in notice_types:
         settings_row = []
         for medium_id, medium_display in NOTICE_MEDIA:
@@ -74,12 +76,17 @@ def notice_settings(request):
                     if not setting.send:
                         setting.send = True
                         setting.save()
+                        changed = True
                 else:
                     if setting.send:
                         setting.send = False
                         setting.save()
+                        changed = True
             settings_row.append((form_label, setting.send))
         settings_table.append({"notice_type": notice_type, "cells": settings_row})
+
+    if changed:
+        messages.add_message(request, messages.INFO, "Notification settings updated.")
 
     if request.method == "POST":
         next_page = request.POST.get("next_page", ".")
