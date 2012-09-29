@@ -43,7 +43,7 @@ class EmailBackend(backends.BaseBackend):
 
         short = backends.format_notification("short.txt",
                                              notice_type.label,
-                                             context)
+                                             context).rstrip('\n')
 
         message_txt = backends.format_notification("full.txt",
                                                    notice_type.label,
@@ -53,13 +53,16 @@ class EmailBackend(backends.BaseBackend):
                                                notice_type.label,
                                                context)
 
-        subject = render_to_string("notification/email_subject.txt",
-                                  {"message": short}, context)
+        subject = render_to_string(("notification/default/email_subject.txt",
+                                    "notification/email_subject.txt"),
+                                  {"message": short}, context).rstrip('\n')
 
-        body = render_to_string("notification/email_body.html",
+        body = render_to_string(("notification/default/email_body.html",
+                                 "notification/email_body.html"),
                                 {"message": message}, context)
 
-        body_txt = render_to_string("notification/email_body.txt",
+        body_txt = render_to_string(("notification/default/email_body.txt",
+                                     "notification/email_body.html"),
                                     {"message": message_txt}, context)
 
         msg = EmailMultiAlternatives(subject, body_txt,
