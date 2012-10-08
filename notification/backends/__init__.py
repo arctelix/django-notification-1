@@ -13,11 +13,11 @@ def format_notification(template, label, context):
     Formats a notification to a specific template format.
     '''
     # conditionally turn off autoescaping for .txt extensions in format
-    if template.endswith(".txt"):
-        context.autoescape = False
+    autoescape = not template.endswith(".txt")
     return render_to_string(("notification/%s/%s" % (label, template),
                              "notification/default/%s" % template),
-                            context_instance=Context(context))
+                            context_instance=Context(context,
+                                autoescape=autoescape))
 
 # mostly for backend compatibility
 default_backends = (

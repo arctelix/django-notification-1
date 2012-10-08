@@ -3,11 +3,9 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 from django.core.urlresolvers import reverse
-from django.db.models.loading import get_app
 from django.template import Context
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
-from django.core.exceptions import ImproperlyConfigured
 
 # Django Apps
 from django.contrib.sites.models import Site
@@ -53,14 +51,14 @@ class EmailBackend(backends.BaseBackend):
                                                notice_type.label,
                                                context)
 
-        subject = render_to_string(("notification/default/email_subject.txt",
-                                    "notification/email_subject.txt"),
-                                  {"message": short}, context).rstrip('\n')
-
-        body = render_to_string(("notification/default/email_body.html",
-                                 "notification/email_body.html"),
+        body = render_to_string(("notification/email_body.html",
+                                 "notification/default/email_body.html"),
                                 {"message": message}, context)
 
+        context.autoescape = False
+        subject = render_to_string(("notification/email_subject.txt",
+                                    "notification/default/email_subject.txt"),
+                                  {"message": short}, context).rstrip('\n')
         body_txt = render_to_string(("notification/default/email_body.txt",
                                      "notification/email_body.html"),
                                     {"message": message_txt}, context)
