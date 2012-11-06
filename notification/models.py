@@ -10,6 +10,7 @@ import settings
 # This app
 from notification import backends
 
+
 class NoticeType(models.Model):
     '''
     Stores a Notice class. Every notification sent out must belong to a
@@ -34,13 +35,14 @@ class NoticeType(models.Model):
 # key is a tuple (medium_id, backend_label)
 NOTIFICATION_BACKENDS = backends.load_backends()
 NOTICE_MEDIA = [key for key in NOTIFICATION_BACKENDS.keys()]
-NOTICE_MEDIA_DEFAULTS = {key[0] : backend.spam_sensitivity for key,backend in \
+NOTICE_MEDIA_DEFAULTS = {key[0]: backend.spam_sensitivity for key, backend in
                                                  NOTIFICATION_BACKENDS.items()}
+
 
 def create_notice_type(label, display, description, default=2, verbosity=1):
     '''
     Creates a new NoticeType.
-    This is intended to be used by other apps as a post_syncdb manangement step.
+    Intended to be used by other apps as a post_syncdb manangement step.
     '''
     try:
         notice_type = NoticeType.objects.get(label=label)
@@ -66,6 +68,7 @@ def create_notice_type(label, display, description, default=2, verbosity=1):
         if verbosity > 0:
             print "Created %s NoticeType" % label
 
+
 class NoticeSetting(models.Model):
     '''
     Object that indicates, for a given user, whether to send notifications
@@ -82,24 +85,28 @@ class NoticeSetting(models.Model):
         verbose_name_plural = _("notice settings")
         unique_together = ("user", "notice_type", "medium")
 
+
 def get_notification_setting(user, notice_type, medium):
     try:
-        return NoticeSetting.objects.get(user = user,
-                                         notice_type = notice_type,
-                                         medium = medium)
+        return NoticeSetting.objects.get(user=user,
+                                         notice_type=notice_type,
+                                         medium=medium)
     except NoticeSetting.DoesNotExist:
         send = NOTICE_MEDIA_DEFAULTS[medium] <= notice_type.default
 
-        return NoticeSetting.objects.create(user = user,
-                                            notice_type = notice_type,
-                                            medium = medium,
-                                            send = send)
+        return NoticeSetting.objects.create(user=user,
+                                            notice_type=notice_type,
+                                            medium=medium,
+                                            send=send)
+
 
 def should_send(user, notice_type, medium):
     return get_notification_setting(user, notice_type, medium).send
 
+
 class LanguageStoreNotAvailable(Exception):
     pass
+
 
 def get_notification_language(user):
     '''
@@ -118,6 +125,7 @@ def get_notification_language(user):
             raise LanguageStoreNotAvailable
     raise LanguageStoreNotAvailable
 
+
 def broadcast(label, extra_context=None, sender=None, exclude=None):
     '''Brodcasts a notification for all the users on the system.'''
 
@@ -126,6 +134,7 @@ def broadcast(label, extra_context=None, sender=None, exclude=None):
     send_to = set(User.objects.all()) - set(exclude)
 
     send(send_to, label, extra_context, sender)
+
 
 def send(users, label, extra_context=None, sender=None):
     '''
@@ -150,6 +159,7 @@ def send(users, label, extra_context=None, sender=None):
     # reset environment to original language
     activate(current_language)
 
+
 class ObservedItemManager(models.Manager):
 
     def observers(self, observed, label):
@@ -170,15 +180,15 @@ class ObservedItemManager(models.Manager):
         '''
         content_type = ContentType.objects.get_for_model(observed)
         observation = self.get(content_type=content_type,
-                               object_id = observed.id,
-                               user = observer,
-                               notice_type__label = label)
+                               object_id=observed.id,
+                               user=observer,
+                               notice_type__label=label)
         return observation
 
 
 class Observation(models.Model):
     '''
-    This works like a many to many table, defining observation relationships 
+    This works like a many to many table, defining observation relationships
     between observers and observed objects.
     '''
     user = models.ForeignKey(User, verbose_name=_("user"))
@@ -188,7 +198,7 @@ class Observation(models.Model):
     # Polymorphic relation to allow any object to be observed
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
-    observed_object = generic.GenericForeignKey("content_type", "object_id") 
+    observed_object = generic.GenericForeignKey("content_type", "object_id")
 
     class meta:
         unique_toguether = ('user', 'notice_type', 'content_type', 'object_id')
@@ -200,12 +210,13 @@ class Observation(models.Model):
         send([self.user],
              self.notice_type.label,
              extra_context,
-             sender = self.observed_object)
+             sender=self.observed_object)
 
     class Meta:
         ordering = ["-added"]
         verbose_name = _("observed item")
         verbose_name_plural = _("observed items")
+
 
 def observe(observed, observer, labels):
     '''
@@ -223,6 +234,7 @@ def observe(observed, observer, labels):
                                         notice_type=notice_type)
             observed_item.save()
 
+
 def stop_observing(observed, observer, labels):
     '''
     Remove an Observation
@@ -234,6 +246,7 @@ def stop_observing(observed, observer, labels):
             Observation.objects.get_for(observed, observer, label).delete()
         except Observation.DoesNotExist:
             pass
+
 
 def send_observation_notices_for(observed, label, xcontext=None, exclude=None):
     '''
@@ -247,8 +260,10 @@ def send_observation_notices_for(observed, label, xcontext=None, exclude=None):
         if observation.user not in exclude:
             observation.send_notice(xcontext)
 
+
 def is_observing(observed, observer, labels):
-    if observer.is_anonymous(): return False
+    if observer.is_anonymous():
+        return False
     if not isinstance(labels, list):
         labels = [labels]
     for label in labels:
@@ -259,6 +274,7 @@ def is_observing(observed, observer, labels):
         except Observation.MultipleObjectsReturned:
             pass
     return True
+
 
 def get_observations(observer, observed_type, labels):
     if observer.is_anonymous():

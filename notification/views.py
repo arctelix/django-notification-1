@@ -3,7 +3,9 @@ from datetime import datetime, timedelta
 
 # Django
 from django.core.urlresolvers import reverse
-from django.shortcuts import render_to_response, get_object_or_404
+from django.core.signing import Signer, BadSignature
+from django.contrib.auth.models import User
+from django.shortcuts import render_to_response, get_object_or_404, render
 from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.db.models import Q
@@ -15,7 +17,7 @@ from django.contrib.auth.decorators import login_required
 # This app
 #FIXME dinamically import this
 from notification.backends.website import Notice
-from notification.models import (NoticeType, NOTICE_MEDIA,
+from notification.models import (NoticeType, NoticeSetting, NOTICE_MEDIA,
                                  get_notification_setting)
 
 @login_required
@@ -198,3 +200,22 @@ def mark_all_seen(request):
         notice.unseen = False
         notice.save()
     return HttpResponseRedirect(reverse("notification_notices"))
+
+
+def unsubscribe(request, medium, code):
+    signer = Signer()
+    try:
+        user = User.objects.get(id=signer.unsign(code))
+        medium_code = [x for x in NOTICE_MEDIA if x[1] == medium][0][0]
+    except (BadSignature, User.DoesNotExist, IndexError):
+        raise Http404
+
+    for ns in NoticeSetting.objects.filter(user=user, medium=medium_code):
+        ns.send = False
+        ns.save()
+
+    if medium == 'email':
+        ctx = {'message': """Your email address (%s) will no longer receive any
+                          other email notification from us.""" % user.email}
+
+    return render(request, 'notification/unsubscribed.html', ctx)

@@ -3,6 +3,7 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 from django.core.urlresolvers import reverse
+from django.core.signing import Signer
 from django.template import Context
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -12,6 +13,7 @@ from django.contrib.sites.models import Site
 
 # This app
 from notification import backends
+
 
 class EmailBackend(backends.BaseBackend):
     spam_sensitivity = 2
@@ -23,10 +25,13 @@ class EmailBackend(backends.BaseBackend):
         return False
 
     def deliver(self, recipient, sender, notice_type, extra_context):
+        signer = Signer()
         # TODO: require this to be passed in extra_context
         current_site = Site.objects.get_current()
         root_url = "http://%s" % unicode(Site.objects.get_current())
         notices_url = root_url + reverse("notification_notices")
+        args = ['email', signer.sign(recipient.pk)]
+        unsub_url = root_url + reverse('notificaton_unsubscribe', args=args)
 
         # update context with user specific translations
         context = Context({
@@ -36,6 +41,7 @@ class EmailBackend(backends.BaseBackend):
             "notices_url": notices_url,
             "root_url": root_url,
             "current_site": current_site,
+            "unsubscribe_link": unsub_url,
         })
         context.update(extra_context)
 

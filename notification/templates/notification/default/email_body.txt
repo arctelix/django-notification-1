@@ -4,4 +4,5 @@
 {{ message }}
 
 To see other notices or change how you receive notifications, please go to {{ notices_url }}.
+If you wish to stop receiving email notification from us, visit {{ unsubscribe_link }}.
 {% endblocktrans %}
