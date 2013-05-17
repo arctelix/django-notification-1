@@ -5,7 +5,7 @@ from django.utils.translation import get_language, activate, ugettext_lazy as _
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
-import settings
+from django.conf import settings
 
 # This app
 from notification import backends

@@ -1,8 +1,27 @@
+{% comment %}
+context: 
+"message":full.txt 
+"recipient": recipient,
+"sender": sender,
+"notice": notice_type,
+"notices_url": notices_url,
+"root_url": root_url,
+"current_site": current_site,
+"unsubscribe_link": unsub_url, 
+extra_context:
+"from_user":user,
+{% endcomment %}
 {% load i18n %}
 {% blocktrans %}
+{% header_generic request %}
 
-{{ message }}
+Hey {{recipient}},
+{{message}}
+Visit {{current_site.name}}:
+{{root_url}}
 
-To see other notices or change how you receive notifications, please go to {{ notices_url }}.
-If you wish to stop receiving email notification from us, visit {{ unsubscribe_link }}.
+To see other notices or change how you receive notifications, please go to:
+{{ notices_url }}.
+If you wish to stop receiving email notification from us, visit:
+{{ unsubscribe_link }}.
 {% endblocktrans %}

@@ -1,1 +1,10 @@
-{% load i18n %}{% blocktrans %}{{ notice }}{% endblocktrans %}
+{% comment %} 
+context:
+"recipient": recipient,
+"sender": sender,
+"notice": .label . display .description,
+"current_site": .host .name,
+"root_url": root_url,
+extra_context:
+"from_user":user,
+{% endcomment %}{% load i18n %}{% blocktrans with notice.display as notice %}You have a {{ notice }}{% endblocktrans %}

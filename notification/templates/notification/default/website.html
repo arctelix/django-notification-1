@@ -1,0 +1,23 @@
+{% comment %}
+context:
+'notice': self.notice_type,
+"recipient": self.recipient,
+"sender": self.sender
+'message_short':short.txt, 
+'message_full':full.txt,
+'added': self.added,
+"unseen": self.unseen,
+"archived": self.archived,
+"content_type": self.content_type,
+"object_id": self.object_id
+"current_site": .host .name,
+"root_url": root_url,
+"notice_id": self.id
+extra_context:
+"from_user":user,
+{% endcomment %}
+{% comment %}
+notification_view_sender
+{% endcomment %}
+{% load i18n %}
+<a href="{% url notification_view_sender notice_id %}">{{message_full}}</a>

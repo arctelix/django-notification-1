@@ -1,9 +1,15 @@
+# Python Core
+from datetime import datetime
+
 # Django
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+
+# Django Apps
+from django.contrib.sites.models import Site
 
 # PickleField
 from picklefield.fields import PickledObjectField
@@ -55,7 +61,7 @@ class Notice(models.Model):
     '''
     recipient = models.ForeignKey(User, verbose_name=_("recipient"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
-    added = models.DateTimeField(_("added"), auto_now=True)
+    added = models.DateTimeField(_("added"))
     unseen = models.BooleanField(_("unseen"), default=True)
     archived = models.BooleanField(_("archived"), default=False)
 
@@ -79,10 +85,30 @@ class Notice(models.Model):
         """
         Render the notification with the given template.
         """
-        self.data.update({'self': self})
+        current_site = Site.objects.get_current()
+        root_url = "http://%s" % unicode(current_site)
+        self.data.update({"root_url": root_url, "current_site": current_site, "notice": self.notice_type, "recipient": self.recipient, "sender": self.sender})
+        context = self.data
+        short = backends.format_notification("short.txt",
+                                             self.notice_type.label,
+                                             context).rstrip('\n')
+
+        full = backends.format_notification("full.txt",
+                                                   self.notice_type.label,
+                                                   context)
+      
+        self.data.update({'message_short':short, 
+                          'message_full':full,
+                          'added': self.added,
+                          "unseen": self.unseen,
+                          "archived": self.archived,
+                          "content_type": self.content_type,
+                          "object_id": self.object_id,
+                          "notice_id": self.id,
+                          })
         return backends.format_notification(template,
                                             self.notice_type.label,
-                                            self.data)
+                                            context)
 
     def is_unseen(self):
         """
@@ -118,4 +144,5 @@ class WebsiteBackend(backends.BaseBackend):
         Notice.objects.create(recipient=recipient,
                               sender=sender,
                               data=extra_context,
+                              added=datetime.now(),
                               notice_type=notice_type)

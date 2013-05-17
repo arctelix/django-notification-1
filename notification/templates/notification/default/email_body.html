@@ -1,8 +1,27 @@
+{% comment %}
+context: 
+"message":full.html 
+"recipient": recipient,
+"sender": sender,
+"notice": notice_type,
+"notices_url": notices_url,
+"root_url": root_url,
+"current_site": current_site,
+"unsubscribe_link": unsub_url,
+extra_context:
+"from_user":user,
+{% endcomment %}
 {% load i18n %}
-{% blocktrans %}
+{% load email %}
 
-{{ message }}
+{% header_generic request %}
+<div class="body">
+	<div>Hey {{recipient}},<br><br></div>
+		<div>{{message}}<br>
+		Check out  
+		<a class="brand" style="font-family:Arial, Helvetica, sans-serif" href="{{root_url}}/">{{current_site.name}}</a>.
+	</div>
+</div>
+{% footer_generic request %}
 
-To see other notices or change how you receive notifications, please go to {{ notices_url }}.
-If you wish to stop receiving email notification from us, visit {{ unsubscribe_link }}.
-{% endblocktrans %}
+

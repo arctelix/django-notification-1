@@ -1,0 +1,77 @@
+{% extends "notification/base.html" %}
+{% load humanize %}
+{% load i18n %}
+
+{% block head_title %}{% trans "Notifications" %}{% endblock %}
+
+{% block body %}
+    {% if all %}
+		<h1>{% trans "All Notifications" %}
+			<div class="btn-group pull-right">
+				<a class="btn btn-mini dropdown-toggle" data-toggle="dropdown" href="#">
+					Options
+					<span class="caret"></span>
+				</a>
+				<ul class="dropdown-menu">
+					<li><a href="{% url notification_notices %}">{% trans "View Recent Notices" %}</a></li>
+					
+		{% else %}
+		<h1>{% trans "Recent Notifications" %}
+			<div class="btn-group pull-right">
+				<a class="btn btn-small dropdown-toggle" data-toggle="dropdown" href="#">
+					Options
+					<span class="caret"></span>
+				</a>
+				<ul class="dropdown-menu">
+					<li><a href="{% url notification_notices_all %}">{% trans "View All Notices" %}</a></li>
+	{% endif %}
+					<li><a href="{% url notification_mark_all_seen %}">{% trans "Mark all as seen" %}</a></li>
+					<li><a href="{% url notification_notice_settings %}">{% trans "Manage Notifications" %}</a></li></span>
+				</ul>
+			</div>
+		</h1>
+	{% if notices and all%}
+        {# TODO: get timezone support working with regroup #}
+        {% regroup notices by added.date|date:"F Y" as notices_by_month %}
+        {% for date in notices_by_month %}
+			{% if date.grouper != this_month %}
+			<h2 class="notice_date">{{ date.grouper }}</h2>
+			{% else %}
+			<h2 style="margin-top:-16px" class="notice_date">This Month</h2>
+			{% endif %}
+			<div class="notices-container">
+            {% for notice in date.list %}
+                {% if notice.unseen %}
+                <div class="notice unseen">
+                {% else %}
+                <div class="notice">
+                {% endif %}
+					<span class="notice_mark"><input type="checkbox"></span>
+					<span class="notice_message">{{ notice.render }}</span>
+					{% if date.grouper != this_month %}
+					<span class="notice_time">{{ notice.added|date:"\o\n \t\h\e jS @ P" }}</span>
+					{% else %}
+					<span class="notice_time">{{ notice.added|naturaltime }}</span>
+					{% endif %}
+				</div>
+            {% endfor %}
+			</div>
+        {% endfor %}
+	{% elif notices %}	
+		<div class="notices-container">
+		{% for notice in notices %}
+			{% if notice.unseen %}
+			<div class="notice unseen">
+			{% else %}
+			<div class="notice">
+			{% endif %}
+				<span class="notice_message">{{ notice.render }}</span>
+				<span class="notice_time">{{ notice.added|naturaltime }}</span>
+			</div>
+        {% endfor %}
+		</div>
+    {% else %}
+        <p>{% trans "No notices." %}</p>
+    {% endif %}
+    
+{% endblock %}

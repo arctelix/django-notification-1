@@ -37,7 +37,7 @@ class EmailBackend(backends.BaseBackend):
         context = Context({
             "recipient": recipient,
             "sender": sender,
-            "notice": ugettext(notice_type.display),
+            "notice": notice_type,
             "notices_url": notices_url,
             "root_url": root_url,
             "current_site": current_site,

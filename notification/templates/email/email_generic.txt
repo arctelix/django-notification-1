@@ -1,0 +1,4 @@
+{% load email %}
+{% header_generic request %}
+email_generic.txt: your message here
+{% footer_generic request %}

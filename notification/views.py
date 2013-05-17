@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect, Http404
 from django.template import RequestContext
 from django.db.models import Q
 from django.contrib import messages
+from django.core.urlresolvers import resolve, Resolver404
 
 # Django Apps
 from django.contrib.auth.decorators import login_required
@@ -26,6 +27,7 @@ def notices(request, alln=False):
     The main notices index view.
     """
     notices = Notice.objects.notices_for(request.user)
+    this_month = datetime.now().strftime("%B %Y")
 
     if not alln:
         old = datetime.now() - timedelta(days=3)
@@ -36,10 +38,11 @@ def notices(request, alln=False):
             latest_notices = notices.filter()[:10]
 
         notices = latest_notices
-
+    
     return render_to_response("notification/notices.html", {
         "notices": notices,
         'all': alln,
+        'this_month': this_month,
     }, context_instance=RequestContext(request))
 
 
@@ -85,6 +88,9 @@ def notice_settings(request):
                         setting.save()
                         changed = True
             settings_row.append((form_label, setting.send))
+        #use to determin if a notice_type is from the system or a system user
+        notice_type.is_system = notice_type.label.find('system')+1
+        print '-----------------------',notice_type.is_system
         settings_table.append({"notice_type": notice_type, "cells": settings_row})
 
     if changed:
@@ -131,6 +137,47 @@ def single(request, id, mark_seen=True):
         return render_to_response("notification/single.html", {
             "notice": notice,
         }, context_instance=RequestContext(request))
+    raise Http404
+    
+@login_required
+def view_sender(request, id, sender_url=None, mark_seen=True):
+    """
+    Use in a template to generate a link to the sender's url and mark the notice as seen.
+
+    Optional arguments:
+    
+        sender_url
+            If not specified as a url perameter then the view will attempt to
+            generate a url based on the notice.content_type & notice.sender.id.
+            IF your url's are designed to mirror your model names this shold work.
+            Otherwise sepicfy the url you would like to redirect to as a get perameter
+            IE: {% url notification_view_sender notice.id %}?sender_url=/some/redirect/url/
+        mark_seen
+            If ``True``, mark the notice as seen if it isn't
+            already.  Do nothing if ``False``.  Default: ``True``.
+    """
+    notice = get_object_or_404(Notice, id=id)
+    if request.user == notice.recipient:
+        if mark_seen and notice.unseen:
+            notice.unseen = False
+            notice.save()
+        if not sender_url:
+            sender_url = request.REQUEST.get('sender_url',None)
+            print 'sender from request: ',sender_url
+            try:
+                resolve(sender_url)
+            except:
+                sender_url = None
+        if not sender_url:
+            sender_url = '/'+str(notice.content_type)+'/'+str(notice.sender.id)+'/'
+            print 'sender autogen: ',sender_url
+            try:
+                resolve(sender_url)
+            except:
+                print 'no good sender_url'
+                raise Http404
+        
+        return HttpResponseRedirect(sender_url)
     raise Http404
 
 
