@@ -5,5 +5,4 @@ context:
 "notice": notice_type),
 extra_context:
 "from_user":user,
-{% endcomment %}
-{% load i18n %}{% blocktrans with notice.description as notice%}{{from_user}} {{ notice }}{% endblocktrans %}
+{% endcomment %}{% load i18n %}{{from_user|capfirst}} {% blocktrans with notice.description as notice %}{{ notice }}{% endblocktrans %}

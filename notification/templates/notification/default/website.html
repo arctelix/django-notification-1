@@ -15,6 +15,8 @@ context:
 "notice_id": self.id
 extra_context:
 "from_user":user,
+"notice_id": Notice.id/False,
+"sender_url": root_url+sender_url,
 {% endcomment %}
 {% comment %}
 notification_view_sender

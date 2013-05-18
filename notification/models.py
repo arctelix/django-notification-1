@@ -7,6 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
 
+# Django Apps
+from django.contrib.sites.models import Site
+
 # This app
 from notification import backends
 
@@ -30,14 +33,17 @@ class NoticeType(models.Model):
         verbose_name = _("notice type")
         verbose_name_plural = _("notice types")
 
-
+current_site = Site.objects.get_current()
 # XXX These lines must come AFTER NoticeType is defined
 # key is a tuple (medium_id, backend_label)
 NOTIFICATION_BACKENDS = backends.load_backends()
 NOTICE_MEDIA = [key for key in NOTIFICATION_BACKENDS.keys()]
 NOTICE_MEDIA_DEFAULTS = {key[0]: backend.spam_sensitivity for key, backend in
                                                  NOTIFICATION_BACKENDS.items()}
-
+for key in NOTIFICATION_BACKENDS.keys():
+    if key[1] == 'website':
+        website = NOTIFICATION_BACKENDS[key]
+        from notification.backends.website import Notice
 
 def create_notice_type(label, display, description, default=2, verbosity=1):
     '''
@@ -139,21 +145,47 @@ def broadcast(label, extra_context=None, sender=None, exclude=None):
 def send(users, label, extra_context=None, sender=None):
     '''
     Creates a new notice.
-    This is intended to be how other apps create new notices:
-    notification.send(user, "friends_invite_sent", {"foo": "bar"})
+        This is intended to be how other apps create new notices:
+        notification.send(user, "friends_invite_sent", {"foo": "bar"})
+    
+    sender: should always be the object of interest to the users(recipiants)
+        Example 1:  if a user is followed the sender should be the following user.
+        Example 2:  if a blog entry is commented on the sender should be the blog entry.
+
+    sender_url: a path to the sender. If not specified in extra_context then a url 
+        will be generated automatically (/content_type/sender.id/) if your url's are the 
+        same as your model names this should work.  If the website backend is present
+        then the sender_url will pass through view_sender view and mark the notice as seen.
+        *If specified in extra_context, provide just the path and it will be converted to
+        the proper url automatically.
     '''
     notice_type = NoticeType.objects.get(label=label)
     current_language = get_language()
     extra_context = extra_context or {}
+    sender_url = extra_context.get('sender_url', False)
+    root_url = "http://%s" % unicode(current_site)
+    if not sender_url:
+        ctype = ContentType.objects.get_for_model(sender)
+        sender_url = '/'+str(ctype)+'/'+str(sender.id)+'/'
 
     for user in users:
         try:
             activate(get_notification_language(user))
         except LanguageStoreNotAvailable:
             pass
-
+        
+        #if website backend is present add notice_id & convert sender_url to pass through view_sender.
+        if website and website.can_send(user, notice_type):
+            website.deliver(user, sender, notice_type, extra_context)
+            notice = Notice.objects.latest('added')
+            extra_context.update({"notice_id": notice.id, 
+                                  "sender_url": root_url+'/accounts/notifications/view/'+str(notice.id)+'/?sender_url='+sender_url})
+        #convert sender_url to full url without view_sender.
+        else:
+            extra_context.update({"notice_id": False, "sender_url": root_url+sender_url})
+        print '---sender_url----',extra_context.get('sender_url', False)
         for backend in NOTIFICATION_BACKENDS.values():
-            if backend.can_send(user, notice_type):
+            if backend.can_send(user, notice_type) and backend != website:
                 backend.deliver(user, sender, notice_type, extra_context)
 
     # reset environment to original language

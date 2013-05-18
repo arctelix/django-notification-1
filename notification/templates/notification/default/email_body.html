@@ -10,18 +10,21 @@ context:
 "unsubscribe_link": unsub_url,
 extra_context:
 "from_user":user,
+"notice_id": Notice.id/False,
+"sender_url": root_url+sender_url,
 {% endcomment %}
 {% load i18n %}
 {% load email %}
 
 {% header_generic request %}
+<br>
 <div class="body">
-	<div>Hey {{recipient}},<br><br></div>
-		<div>{{message}}<br>
-		Check out  
-		<a class="brand" style="font-family:Arial, Helvetica, sans-serif" href="{{root_url}}/">{{current_site.name}}</a>.
+	<div>{%trans "Hey " %}{{recipient|capfirst}},<br><br></div>
+		<div>{{message}}{%trans " on " %}
+		<a class="brand" style="font-family:Arial, Helvetica, sans-serif" href="{{sender_url}}">{{current_site.name}}!</a>.
 	</div>
 </div>
+<br>
 {% footer_generic request %}
 
 

@@ -10,18 +10,17 @@ context:
 "unsubscribe_link": unsub_url, 
 extra_context:
 "from_user":user,
+"notice_id": Notice.id/False,
+"sender_url": root_url+sender_url,
 {% endcomment %}
 {% load i18n %}
-{% blocktrans %}
+{% load email %}
 {% header_generic request %}
-
-Hey {{recipient}},
+{% trans "Hey" %} {{recipient|capfirst}},
 {{message}}
-Visit {{current_site.name}}:
-{{root_url}}
-
-To see other notices or change how you receive notifications, please go to:
-{{ notices_url }}.
-If you wish to stop receiving email notification from us, visit:
-{{ unsubscribe_link }}.
-{% endblocktrans %}
+{% trans "Visit" %} {{current_site.name}} {% trans "to check it out" %}:
+{{sender_url}}
+{% trans "To see other notices or change how you receive notifications, please go to" %}:
+{{ notices_url }}
+{% trans "If you wish to stop receiving email notifications from us, visit" %}:
+{{ unsubscribe_link }}

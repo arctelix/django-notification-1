@@ -10,4 +10,4 @@ context:
 "unsubscribe_link": unsub_url,
 extra_context:
 "from_user":user,
-{% endcomment %}{% load i18n %}{% blocktrans with current_site.name as site_name%}{{ message }} on {{ site_name }}{% endblocktrans %}
+{% endcomment %}{{from_user|capfirst}} {{ message }}

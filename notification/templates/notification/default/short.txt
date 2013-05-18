@@ -7,4 +7,4 @@ context:
 "root_url": root_url,
 extra_context:
 "from_user":user,
-{% endcomment %}{% load i18n %}{% blocktrans with notice.display as notice %}You have a {{ notice }}{% endblocktrans %}
+{% endcomment %}{% load i18n %}{% blocktrans with notice.description as notice %}{{ notice }}{% endblocktrans %}

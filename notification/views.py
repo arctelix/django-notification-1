@@ -90,7 +90,6 @@ def notice_settings(request):
             settings_row.append((form_label, setting.send))
         #use to determin if a notice_type is from the system or a system user
         notice_type.is_system = notice_type.label.find('system')+1
-        print '-----------------------',notice_type.is_system
         settings_table.append({"notice_type": notice_type, "cells": settings_row})
 
     if changed:
@@ -163,18 +162,18 @@ def view_sender(request, id, sender_url=None, mark_seen=True):
             notice.save()
         if not sender_url:
             sender_url = request.REQUEST.get('sender_url',None)
-            print 'sender from request: ',sender_url
+            print 'sender_url: ', sender_url
             try:
                 resolve(sender_url)
             except:
                 sender_url = None
         if not sender_url:
             sender_url = '/'+str(notice.content_type)+'/'+str(notice.sender.id)+'/'
-            print 'sender autogen: ',sender_url
+            print 'sender_url: ', sender_url
             try:
                 resolve(sender_url)
             except:
-                print 'no good sender_url'
+                print 'view_sender has no valid url'
                 raise Http404
         
         return HttpResponseRedirect(sender_url)
