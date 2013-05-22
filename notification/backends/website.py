@@ -1,5 +1,5 @@
 # Python Core
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Django
 from django.db import models
@@ -10,6 +10,7 @@ from django.contrib.contenttypes import generic
 
 # Django Apps
 from django.contrib.sites.models import Site
+from django.utils.timezone import * 
 
 # PickleField
 from picklefield.fields import PickledObjectField
@@ -17,6 +18,7 @@ from picklefield.fields import PickledObjectField
 # This app
 from notification import backends
 from notification.models import NoticeType
+from django.conf import settings
 
 
 class NoticeManager(models.Manager):
@@ -28,8 +30,7 @@ class NoticeManager(models.Manager):
         unseen : {None: all notices, True: only unseen, False: only seen}
         """
         qs = self.filter(recipient=user)
-        if not archived:
-            qs = qs.filter(archived=archived)
+        qs = qs.filter(archived=archived)
         if unseen is not None:
             qs = qs.filter(unseen=unseen)
         return qs
@@ -87,6 +88,7 @@ class Notice(models.Model):
         """
         current_site = Site.objects.get_current()
         root_url = "http://%s" % unicode(current_site)
+        if not self.data: self.data = {}
         self.data.update({"root_url": root_url, "current_site": current_site, "notice": self.notice_type, "recipient": self.recipient, "sender": self.sender})
         context = self.data
         short = backends.format_notification("short.txt",
@@ -144,5 +146,5 @@ class WebsiteBackend(backends.BaseBackend):
         Notice.objects.create(recipient=recipient,
                               sender=sender,
                               data=extra_context,
-                              added=datetime.now(),
+                              added= datetime.now(),
                               notice_type=notice_type)

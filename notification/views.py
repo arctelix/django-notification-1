@@ -22,12 +22,18 @@ from notification.models import (NoticeType, NoticeSetting, NOTICE_MEDIA,
                                  get_notification_setting)
 
 @login_required
-def notices(request, alln=False):
+def notices(request, alln=False, archived=False):
     """
     The main notices index view.
     """
-    notices = Notice.objects.notices_for(request.user)
+    notices = Notice.objects.notices_for(request.user, archived)
+    
+    # TODO:for date grouper but i'm sure there is a better way.
     this_month = datetime.now().strftime("%B %Y")
+    this_week = datetime.now().strftime("%W %Y")
+    today = datetime.now().strftime("%j %Y")
+    
+    week_ago = datetime.now() - timedelta(weeks=1)
 
     if not alln:
         old = datetime.now() - timedelta(days=3)
@@ -41,10 +47,13 @@ def notices(request, alln=False):
     
     return render_to_response("notification/notices.html", {
         "notices": notices,
+        "archived": archived,
         'all': alln,
         'this_month': this_month,
+        'this_week': this_week,
+        'today': today,
+        'week_ago': week_ago,
     }, context_instance=RequestContext(request))
-
 
 @login_required
 def notice_settings(request):
@@ -138,7 +147,8 @@ def single(request, id, mark_seen=True):
         }, context_instance=RequestContext(request))
     raise Http404
     
-@login_required
+#@login_required forces user to log in when linke accessed by email, even when already logged in.
+#returning 404 if request.user == notice.recipient test fails is sufficient security.
 def view_sender(request, id, sender_url=None, mark_seen=True):
     """
     Use in a template to generate a link to the sender's url and mark the notice as seen.
@@ -162,18 +172,16 @@ def view_sender(request, id, sender_url=None, mark_seen=True):
             notice.save()
         if not sender_url:
             sender_url = request.REQUEST.get('sender_url',None)
-            print 'sender_url: ', sender_url
             try:
                 resolve(sender_url)
             except:
                 sender_url = None
         if not sender_url:
             sender_url = '/'+str(notice.content_type)+'/'+str(notice.sender.id)+'/'
-            print 'sender_url: ', sender_url
             try:
                 resolve(sender_url)
             except:
-                print 'view_sender has no valid url'
+                print 'notifications.views.view_sender: no valid url'
                 raise Http404
         
         return HttpResponseRedirect(sender_url)
@@ -181,7 +189,7 @@ def view_sender(request, id, sender_url=None, mark_seen=True):
 
 
 @login_required
-def archive(request, noticeid=None, next_page=None):
+def toggle_archived(request, noticeid=None, next_page=None):
     """
     Archive a :model:`notices.Notice` if the requesting user is the
     recipient or if the user is a superuser.  Returns a
@@ -195,11 +203,18 @@ def archive(request, noticeid=None, next_page=None):
         next_page
             The page to redirect to when done.
     """
+    if not next_page:
+        next_page = request.META['HTTP_REFERER']
     if noticeid:
         try:
             notice = Notice.objects.get(id=noticeid)
             if request.user == notice.recipient or request.user.is_superuser:
-                notice.archive()
+                if notice.archived:
+                    notice.archived = False
+                    notice.save()
+                else:
+                    notice.archived = True
+                    notice.save()
             else:   # you can archive other users' notices
                     # only if you are superuser.
                 return HttpResponseRedirect(next_page)
@@ -223,6 +238,8 @@ def delete(request, noticeid=None, next_page=None):
         next_page
             The page to redirect to when done.
     """
+    if not next_page:
+        next_page = request.META['HTTP_REFERER']
     if noticeid:
         try:
             notice = Notice.objects.get(id=noticeid)
@@ -235,6 +252,92 @@ def delete(request, noticeid=None, next_page=None):
             return HttpResponseRedirect(next_page)
     return HttpResponseRedirect(next_page)
 
+
+@login_required    
+def toggle_unseen(request, noticeid=None, next_page=None):
+    """
+    Toggle unseen :model:`notices.Notice` if the requesting user is the recipient
+    or if the user is a superuser.  Returns a ``HttpResponseRedirect`` when
+    complete.
+
+    Optional arguments:
+
+        noticeid
+            The ID of the :model:`notices.Notice` to be archived.
+
+        next_page
+            The page to redirect to when done.
+            Defaut is HTTP_REFERER
+    """
+    if not next_page:
+        next_page = request.META['HTTP_REFERER']
+    if noticeid:
+        try:
+            notice = Notice.objects.get(id=noticeid)
+            if request.user == notice.recipient or request.user.is_superuser:
+                if notice.unseen:
+                    notice.unseen = False
+                    notice.save()
+                else:
+                    notice.unseen = True
+                    notice.save()
+            else:   # you can delete other users' notices
+                    # only if you are superuser.
+                return HttpResponseRedirect(next_page)
+        except Notice.DoesNotExist:
+            return HttpResponseRedirect(next_page)
+    return HttpResponseRedirect(next_page)
+
+
+@login_required    
+def toggle_all(request, next_page=None):
+    """
+    Toggles: delete, archived, & unseen as checked in form: model:`notices.Notice` if the requesting user is the recipient
+    or if the user is a superuser.  Returns a ``HttpResponseRedirect`` when
+    complete.
+
+    Optional arguments:
+        next_page
+            The page to redirect to when done.
+            Defaut is HTTP_REFERER
+    """
+    if not next_page:
+        next_page = request.META['HTTP_REFERER']
+    notices = {}
+    for var in request.POST:
+        if var != 'csrfmiddlewaretoken':
+            svar = var.split('-')
+            id = svar[0]
+            action = svar[1]
+            value = request.POST[var]
+            if value == 'True': value = True
+            if value == 'False': value = False
+            if not notices.get(id, False):
+                notices[id] = {action:value}
+            else:
+               notices[id].update({action:value})
+    for notice_id in notices:
+        try:
+            notice = Notice.objects.get(id=notice_id)
+            if request.user == notice.recipient or request.user.is_superuser:
+                if notices[notice_id].get('unseen', None) != None and notice.unseen != notices[notice_id]['unseen']:
+                    notice.unseen = notices[notice_id]['unseen']
+                    notice.save()
+                if notices[notice_id].get('archived', None) != None and notice.archived != notices[notice_id]['archived']:
+                    notice.archived = notices[notice_id]['archived']
+                    notice.save()
+                if notices[notice_id].get('delete', None) != None and notices[notice_id]['delete']:
+                    notice.delete()
+                
+            else:   # you can delete other users' notices
+                    # only if you are superuser.
+                return HttpResponseRedirect(next_page)
+        except Notice.DoesNotExist:
+            return HttpResponseRedirect(next_page)
+
+    return HttpResponseRedirect(next_page)
+
+
 @login_required
 def mark_all_seen(request):
     """
@@ -245,7 +348,7 @@ def mark_all_seen(request):
     for notice in Notice.objects.notices_for(request.user, unseen=True):
         notice.unseen = False
         notice.save()
-    return HttpResponseRedirect(reverse("notification_notices"))
+    return HttpResponseRedirect(request.META['HTTP_REFERER'])
 
 
 def unsubscribe(request, medium, code):

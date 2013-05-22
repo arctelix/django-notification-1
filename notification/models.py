@@ -183,7 +183,6 @@ def send(users, label, extra_context=None, sender=None):
         #convert sender_url to full url without view_sender.
         else:
             extra_context.update({"notice_id": False, "sender_url": root_url+sender_url})
-        print '---sender_url----',extra_context.get('sender_url', False)
         for backend in NOTIFICATION_BACKENDS.values():
             if backend.can_send(user, notice_type) and backend != website:
                 backend.deliver(user, sender, notice_type, extra_context)
