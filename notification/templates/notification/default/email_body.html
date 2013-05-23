@@ -1,20 +1,25 @@
 {% comment %}
-context: 
-"message":full.html 
-"recipient": recipient,
-"sender": sender,
-"notice": notice_type,
-"notices_url": notices_url,
-"root_url": root_url,
-"current_site": current_site,
-"unsubscribe_link": unsub_url,
-extra_context:
-"from_user":user,
-"notice_id": Notice.id/False,
-"sender_url": root_url+sender_url,
+<!--CONTEXT: 
+	"message":full.html 
+	"recipient": recipient,
+	"sender": sender,
+	"notice": notice_type,
+	"notices_url": notices_url,
+	"root_url": root_url,
+	"current_site": current_site,
+	"unsubscribe_link": unsub_url,-->
+<!-- EXTRA CONTEXT:
+	"from_user":user,
+	"notice_id": Notice.id/False,
+	"sender_url": root_url+sender_url, -->
+<!--{% load email %}: load email tempaltetags (you muust install in your templatetags) -->
+<!--{% dev_static_prefix as DEV_STATIC_PREFIX %}: returns url to static host when STATIC_URL 
+    is defined as a path (this is required to get working urls to images in your email template. -->
 {% endcomment %}
 {% load i18n %}
 {% load email %}
+{% dev_static_prefix as DEV_STATIC_PREFIX %}
+{% load static from staticfiles %}
 
 {% header_generic request %}
 <br>
