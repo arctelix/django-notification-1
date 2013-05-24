@@ -185,6 +185,8 @@ def view_sender(request, id, sender_url=None, mark_seen=True):
                 raise Http404
         
         return HttpResponseRedirect(sender_url)
+    
+    messages.add_message(request, messages.ERROR, "This was not your notification!")
     raise Http404
 
 
