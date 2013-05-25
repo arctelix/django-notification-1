@@ -30,7 +30,7 @@
 <a href="{{root_url}}">{{from_user|capfirst}}</a>
 {% if observed %}
 	{% observed_desc notice.description sender_type from_user as desc%}
-	{% make_link desc sender_type sender_url %}
+	{% sender_to_link desc sender sender_url %}
 {% else %}
-	{% make_link notice.description sender_type sender_url %}
+	{% sender_to_link notice.description sender sender_url %}
 {% endif %}

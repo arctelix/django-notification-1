@@ -154,13 +154,20 @@ def get_sender_path(extra_context, sender):
         the sender_url will pass through the view_sender view and mark the notice as seen.
         *If specified in extra_context, provide just the path and it will be converted to
         the proper url automatically.
+        
+        NOTIFICATION_SENDER_URLS:provide a dictionary of sender to url overides.
+        IE: if your content sender content_type user is located at path '/profie/' 
+        then specify {'user':'profile'} sender_url will generate a link to this path
+        when the word "user" or the translation is found in your notification description.
         '''
-        #TODO: change context from sendr_url to sender_path
         sender_path = extra_context.get('sender_path', False)
         if not sender_path:
-            #generate a path in not supplied
+            #generate a path if not supplied in extra_conext
+            ctype_translations = getattr(settings, 'NOTIFICATION_CONTENT_TYPE_TRANSLATIONS', {})
             try:
                 ctype = ContentType.objects.get_for_model(sender)
+                if ctype in ctype_translations:
+                    ctype = ctype_translations['ctype']
                 sender_path = '/'+str(ctype)+'/'+str(sender.id)+'/'
                 resolve(sender_path)
             except:
