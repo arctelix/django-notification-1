@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.conf import settings
+from django.core.urlresolvers import reverse
+from django.core.signing import Signer
+from django.core.urlresolvers import resolve
 
 # Django Apps
 from django.contrib.sites.models import Site
@@ -13,6 +16,8 @@ from django.contrib.sites.models import Site
 # This app
 from notification import backends
 
+current_site = Site.objects.get_current()
+root_url = "http://%s" % unicode(current_site)
 
 class NoticeType(models.Model):
     '''
@@ -33,7 +38,7 @@ class NoticeType(models.Model):
         verbose_name = _("notice type")
         verbose_name_plural = _("notice types")
 
-current_site = Site.objects.get_current()
+
 # XXX These lines must come AFTER NoticeType is defined
 # key is a tuple (medium_id, backend_label)
 NOTIFICATION_BACKENDS = backends.load_backends()
@@ -141,7 +146,27 @@ def broadcast(label, extra_context=None, sender=None, exclude=None):
 
     send(send_to, label, extra_context, sender)
 
-
+def get_sender_path(extra_context, sender):
+        '''
+        sender_path: a path to the sender. If not specified in extra_context then a url 
+        will be generated automatically (/content_type/sender.id/) if your url's are the 
+        same as your model names this should work.  If the website backend is present then 
+        the sender_url will pass through the view_sender view and mark the notice as seen.
+        *If specified in extra_context, provide just the path and it will be converted to
+        the proper url automatically.
+        '''
+        #TODO: change context from sendr_url to sender_path
+        sender_path = extra_context.get('sender_path', False)
+        if not sender_path:
+            #generate a path in not supplied
+            try:
+                ctype = ContentType.objects.get_for_model(sender)
+                sender_path = '/'+str(ctype)+'/'+str(sender.id)+'/'
+                resolve(sender_path)
+            except:
+                sender_path = ""
+        return sender_path  
+        
 def send(users, label, extra_context=None, sender=None):
     '''
     Creates a new notice.
@@ -151,38 +176,55 @@ def send(users, label, extra_context=None, sender=None):
     sender: should always be the object of interest to the users(recipiants)
         Example 1:  if a user is followed the sender should be the following user.
         Example 2:  if a blog entry is commented on the sender should be the blog entry.
-
-    sender_url: a path to the sender. If not specified in extra_context then a url 
-        will be generated automatically (/content_type/sender.id/) if your url's are the 
-        same as your model names this should work.  If the website backend is present
-        then the sender_url will pass through view_sender view and mark the notice as seen.
-        *If specified in extra_context, provide just the path and it will be converted to
-        the proper url automatically.
     '''
+    print '--send'
     notice_type = NoticeType.objects.get(label=label)
     current_language = get_language()
     extra_context = extra_context or {}
-    sender_url = extra_context.get('sender_url', False)
-    root_url = "http://%s" % unicode(current_site)
-    if not sender_url:
-        ctype = ContentType.objects.get_for_model(sender)
-        sender_url = '/'+str(ctype)+'/'+str(sender.id)+'/'
-
+    notices_url = root_url + reverse("notification_notices")
+    sender_path = get_sender_path(extra_context, sender)
+   
     for user in users:
         try:
             activate(get_notification_language(user))
         except LanguageStoreNotAvailable:
             pass
-        
-        #if website backend is present add notice_id & convert sender_url to pass through view_sender.
+
+        # generate unsubscribe link    
+        signer = Signer()
+        args = ['email', signer.sign(user.pk)]
+        unsub_url = root_url + reverse('notificaton_unsubscribe', args=args)
+
+        # update context with user specific translations
+        context = {
+            "recipient": user,
+            "sender": sender,
+            "notice": notice_type,
+            "notices_url": notices_url,
+            "root_url": root_url,
+            "current_site": current_site,
+            "unsubscribe_link": unsub_url,
+        }
+
+        #if website backend is present add context and save sender_path if provided.
         if website and website.can_send(user, notice_type):
+            if sender_path:
+                #save sender_path to website db
+                extra_context.update({"sender_path":sender_path})
             website.deliver(user, sender, notice_type, extra_context)
+            #website specific context
+            #make sender_url with view_sender (TODO: this may be unreliable, may need signal after saved)
             notice = Notice.objects.latest('added')
-            extra_context.update({"notice_id": notice.id, 
-                                  "sender_url": root_url+'/accounts/notifications/view/'+str(notice.id)+'/?sender_url='+sender_url})
-        #convert sender_url to full url without view_sender.
+            extra_context.update({"sender_url":root_url+notice.get_sender_url()})
+            extra_context.update(notice.get_context())
+
+        #if website is not present provide sender_url without view_sender.
         else:
-            extra_context.update({"notice_id": False, "sender_url": root_url+sender_url})
+            extra_context.update({"notice_id": False, "sender_url": root_url+sender_path})
+        
+        #add context that we did not want to get saved in website db
+        extra_context.update(context)
+        
         for backend in NOTIFICATION_BACKENDS.values():
             if backend.can_send(user, notice_type) and backend != website:
                 backend.deliver(user, sender, notice_type, extra_context)

@@ -3,7 +3,6 @@ from django.conf import settings
 from django.core.mail import EmailMultiAlternatives
 
 from django.core.urlresolvers import reverse
-from django.core.signing import Signer
 from django.template import Context
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -25,26 +24,9 @@ class EmailBackend(backends.BaseBackend):
         return False
 
     def deliver(self, recipient, sender, notice_type, extra_context):
-        signer = Signer()
-        # TODO: require this to be passed in extra_context
-        current_site = Site.objects.get_current()
-        root_url = "http://%s" % unicode(Site.objects.get_current())
-        notices_url = root_url + reverse("notification_notices")
-        args = ['email', signer.sign(recipient.pk)]
-        unsub_url = root_url + reverse('notificaton_unsubscribe', args=args)
 
-        # update context with user specific translations
-        context = Context({
-            "recipient": recipient,
-            "sender": sender,
-            "notice": notice_type,
-            "notices_url": notices_url,
-            "root_url": root_url,
-            "current_site": current_site,
-            "unsubscribe_link": unsub_url,
-        })
-        context.update(extra_context)
-
+        context = Context(extra_context)
+        
         short = backends.format_notification("short.txt",
                                              notice_type.label,
                                              context).rstrip('\n')

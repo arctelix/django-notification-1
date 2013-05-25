@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
+from django.core.urlresolvers import reverse
 
 # Django Apps
 from django.contrib.sites.models import Site
@@ -55,6 +56,10 @@ class NoticeManager(models.Manager):
         """
         return self.notices_for(recipient, unseen=True, **kwargs).count()
 
+#constants for sender url
+current_site = Site.objects.get_current()
+root_url = "http://%s" % unicode(current_site)
+
 
 class Notice(models.Model):
     '''
@@ -81,16 +86,56 @@ class Notice(models.Model):
     def archive(self):
         self.archived = True
         self.save()
+        
+    def get_context(self):
+        """
+        website specific context for use in all templates when website is present
+        """
+        return  {  "added": self.added,
+                   "unseen": self.unseen,
+                   "archived": self.archived,
+                   "content_type": self.content_type,#remove this
+                   "sender_type": self.content_type.name, 
+                   "object_id": self.object_id,
+                   "notice_id": self.id,
+                }
+                
+    def get_sender_url(self):
+        '''
+        sender_url: a path to the sender. If not specified in extra_context then a url 
+        will be generated automatically (/content_type/sender.id/) if your url's are the 
+        same as your model names this should work.  If the website backend is present
+        then the sender_url will pass through view_sender view and mark the notice as seen.
+        *If specified in extra_context, provide just the path and it will be converted to
+        the proper url automatically.
+        '''
+        sender_path = self.data.get('sender_path', '')
+        view_sender_url = reverse('notification_view_sender',args=[str(self.id)])+'?sender_url='
+        
+        sender_url = view_sender_url+sender_path
 
+        return sender_url
+        
+        
     def render(self, template='website.html'):
         """
         Render the notification with the given template.
         """
-        current_site = Site.objects.get_current()
-        root_url = "http://%s" % unicode(current_site)
+
         if not self.data: self.data = {}
-        self.data.update({"root_url": root_url, "current_site": current_site, "notice": self.notice_type, "recipient": self.recipient, "sender": self.sender})
+        
+        #provide context to replicate context provided by notification.send() for all templates
+        self.data.update({  "recipient": self.recipient, 
+                            "sender": self.sender,  
+                            "notice": self.notice_type,
+                            "root_url": root_url,
+                            "sender_url": self.get_sender_url(),
+                        })
+        #provide website specific context
+        self.data.update(self.get_context())
+        
         context = self.data
+        
         short = backends.format_notification("short.txt",
                                              self.notice_type.label,
                                              context).rstrip('\n')
@@ -98,20 +143,21 @@ class Notice(models.Model):
         full = backends.format_notification("full.txt",
                                                    self.notice_type.label,
                                                    context)
-      
-        self.data.update({'message_short':short, 
-                          'message_full':full,
-                          'added': self.added,
-                          "unseen": self.unseen,
-                          "archived": self.archived,
-                          "content_type": self.content_type,
-                          "object_id": self.object_id,
-                          "notice_id": self.id,
-                          })
+
+        full_html = backends.format_notification("full.html",
+                                               self.notice_type.label,
+                                               context)
+        
+        #provide website template specific context
+        self.data.update({  'message_short':short, 
+                            'message_full':full,
+                            'message_full_html':full_html,
+                        })
+                        
         return backends.format_notification(template,
                                             self.notice_type.label,
                                             context)
-
+        
     def is_unseen(self):
         """
         returns value of self.unseen but also changes it to false.
