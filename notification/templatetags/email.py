@@ -12,7 +12,7 @@ register = Library()
 @register.assignment_tag
 def dev_static_prefix():
     '''
-    provide host ip address when STATIC_IP is a path and DEBUG is true(in dev env)
+    provide host ip address when STATIC_IP is a path(in dev env)
     inorder for email links to work.  Rturns '' when in production.  Prfix all relative
     url's with {{DEV_STATE_PREFIX}} in templates to get full url's in emails.
     '''
@@ -23,7 +23,7 @@ def dev_static_prefix():
         raise ImproperlyConfigured
     
     is_url  = static_url.find('//')+1
-    if is_url and debug:
+    if is_url:
         static_prefix = ''
     else:
         try:
