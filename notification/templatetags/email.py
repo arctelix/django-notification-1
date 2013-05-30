@@ -142,5 +142,5 @@ def convert_to_observed_description(desc, sender_type, from_user):
         action = desc.split('your')[0]
         new_value = action+owner_object+sender_type
     else:
-        new_value = ''
+        new_value = desc
     return new_value

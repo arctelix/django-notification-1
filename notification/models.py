@@ -184,7 +184,7 @@ def send(users, label, extra_context=None, sender=None):
         Example 1:  if a user is followed the sender should be the following user.
         Example 2:  if a blog entry is commented on the sender should be the blog entry.
     '''
-    print '--send'
+    
     notice_type = NoticeType.objects.get(label=label)
     current_language = get_language()
     extra_context = extra_context or {}
@@ -283,15 +283,20 @@ class Observation(models.Model):
     class meta:
         unique_toguether = ('user', 'notice_type', 'content_type', 'object_id')
 
-    def send_notice(self, extra_context=None):
+    def send_notice(self, extra_context=None, sender=None):
+        
         if extra_context is None:
             extra_context = {}
+        if not sender:
+            sender = self.observed_object
+            #test in template before using 
+            extra_context.update({"alter_desc":True})
         extra_context.update({"observed": self.observed_object})
         send([self.user],
              self.notice_type.label,
              extra_context,
-             sender=self.observed_object)
-
+             sender=sender)
+        
     class Meta:
         ordering = ["-added"]
         verbose_name = _("observed item")
@@ -328,7 +333,7 @@ def stop_observing(observed, observer, labels):
             pass
 
 
-def send_observation_notices_for(observed, label, xcontext=None, exclude=None):
+def send_observation_notices_for(observed, label, xcontext=None, exclude=None, sender=None):
     '''
     Send a Notice for each user observing this label at the observed object.
     '''
@@ -338,7 +343,7 @@ def send_observation_notices_for(observed, label, xcontext=None, exclude=None):
     observations = Observation.objects.observers(observed, label)
     for observation in observations:
         if observation.user not in exclude:
-            observation.send_notice(xcontext)
+            observation.send_notice(xcontext, sender=sender)
 
 
 def is_observing(observed, observer, labels):

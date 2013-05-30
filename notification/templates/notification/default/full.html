@@ -28,7 +28,7 @@
 {% load i18n %}
 {% load email %}
 <a href="{{root_url}}">{{from_user|capfirst}}</a>
-{% if observed %}
+{% if observed and alter_desc %}
 	{% observed_desc notice.description sender_type from_user as desc%}
 	{% sender_to_link desc sender sender_url %}
 {% else %}

@@ -24,4 +24,4 @@
 	{% footer_generic %} inserts footer
 	{% make_link string "key_word" "url" %} convert's a key_work in a string to a hyperlink with the provided url.
 	{% observed_desc notice.description sender_type sender_url as desc %} Convert a notice description to an observed description-->
-{% endcomment %}{% load i18n %}{% load email %}{{from_user|capfirst}} {% if observed %}{% observed_desc notice.description sender_type from_user as desc%}{{desc}}.{% else %}{{notice.description}}.{% endif %}
+{% endcomment %}{% load i18n %}{% load email %}{{from_user|capfirst}} {% if observed and alter_desc%}{% observed_desc notice.description sender_type from_user as desc%}{{desc}}.{% else %}{{notice.description}}.{% endif %}
