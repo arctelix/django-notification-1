@@ -1,7 +1,8 @@
 from django.conf.urls.defaults import *
 
 from notification.views import (notices, mark_all_seen, single,
-                                notice_settings, unsubscribe, view_sender, delete, toggle_archived, toggle_unseen, toggle_all)
+                                notice_settings, unsubscribe, view_sender, delete, 
+                                toggle_archived, toggle_unseen, toggle_all, observation_settings)
 
 urlpatterns = patterns("",
     url(r"^$", notices, name="notification_notices"),
@@ -16,4 +17,5 @@ urlpatterns = patterns("",
     url(r"^view/(\d+)/.?$", view_sender, name="notification_view_sender"),
     url(r"^mark_all_seen/$", mark_all_seen, name="notification_mark_all_seen"),
     url(r'^unsubscribe/(\w+)/(.+)/$', unsubscribe, name="notificaton_unsubscribe"),
+    url(r'^observation_settings/(?P<content_type_name>.+)$', observation_settings, name="notificaton_observation_settings"),
 )

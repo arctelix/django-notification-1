@@ -279,23 +279,24 @@ class Observation(models.Model):
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     observed_object = generic.GenericForeignKey("content_type", "object_id")
+    send = models.BooleanField(_("send"), default=True)
 
     class meta:
         unique_toguether = ('user', 'notice_type', 'content_type', 'object_id')
 
     def send_notice(self, extra_context=None, sender=None):
-        
-        if extra_context is None:
-            extra_context = {}
-        if not sender:
-            sender = self.observed_object
-            #test in template before using 
-            extra_context.update({"alter_desc":True})
-        extra_context.update({"observed": self.observed_object})
-        send([self.user],
-             self.notice_type.label,
-             extra_context,
-             sender=sender)
+        if self.send:
+            if extra_context is None:
+                extra_context = {}
+            if not sender:
+                sender = self.observed_object
+                #test in template before using 
+                extra_context.update({"alter_desc":True})
+            extra_context.update({"observed": self.observed_object})
+            send([self.user],
+                 self.notice_type.label,
+                 extra_context,
+                 sender=sender)
         
     class Meta:
         ordering = ["-added"]
@@ -336,6 +337,10 @@ def stop_observing(observed, observer, labels):
 def send_observation_notices_for(observed, label, xcontext=None, exclude=None, sender=None):
     '''
     Send a Notice for each user observing this label at the observed object.
+    context options:
+    - alter_desc: determines if convert_to_observed_description occurs in template.
+    optional kwargs:
+    - sender: use to change the sender from the default observed object.
     '''
     xcontext = xcontext or {}
     exclude = exclude or []

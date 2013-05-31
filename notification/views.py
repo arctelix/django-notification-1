@@ -370,3 +370,82 @@ def unsubscribe(request, medium, code):
                           other email notification from us.""" % user.email}
 
     return render(request, 'notification/unsubscribed.html', ctx)
+
+from django.contrib.contenttypes.models import ContentType
+from notification.models import Observation, is_observing
+@login_required
+def observation_settings(request, content_type_name=None):
+    """
+    The observation settings view.
+
+    Template: :template:`notification/observation_settings.html`
+
+    Context:
+
+        notice_types
+            A list of all :model:`notification.NoticeType` objects.
+
+        notice_settings
+            A dictionary containing ``column_headers`` for each ``NOTICE_MEDIA``
+            and ``rows`` containing a list of dictionaries: ``notice_type``, a
+            :model:`notification.NoticeType` object and ``cells``, a list of
+            tuples whose first value is suitable for use in forms and the second
+            value is ``True`` or ``False`` depending on a ``request.POST``
+            variable called ``form_label``, whose valid value is ``on``.
+    """
+    if content_type_name:
+        content_type = ContentType.objects.get(name=content_type_name)
+        observations = Observation.objects.filter(user=request.user, content_type=content_type).order_by('object_id')
+    else:
+        observations = Observation.objects.filter(user=request.user).order_by('content_type', '-object_id')
+    notice_types_u = [x[0] for x in set(observations.values_list('notice_type'))]
+    notice_types = NoticeType.objects.filter(id__in=notice_types_u)
+    observations_u = set(observations.values_list('content_type', 'user', 'object_id'))
+    observer = request.user
+    
+    settings_table = []
+    changed = False
+
+    for observed in observations_u:
+        settings_row = []
+        observed_set = observations.filter(content_type=observed[0], user=observed[1], object_id=observed[2])
+        print observed_set
+        for notice_type in notice_types:
+            try:
+                qs = observed_set.filter(notice_type=notice_type)
+                observed_obj = qs[0]
+                print observed_obj, notice_type, observed_obj.id
+                form_label = "%s_%s" % (notice_type.label, observed_obj.id)
+                send = observed_obj.send
+                if request.method == "POST":
+                    if request.POST.get(form_label) == "on":
+                        if not send:
+                            observed_obj.send = True
+                            changed = True
+                            observed_obj.save()
+                    else:
+                        if send:
+                            observed_obj.send = False
+                            changed = True
+                            observed_obj.save()
+                settings_row.append((form_label, observed_obj.send))
+            except:
+                settings_row.append((False, False))
+        settings_table.append({"observed": observed_obj, "cells": settings_row})
+
+    if changed:
+        messages.add_message(request, messages.INFO, "Notification settings updated.")
+
+    if request.method == "POST":
+        next_page = request.POST.get("next_page", ".")
+        return HttpResponseRedirect(next_page)
+
+    notice_settings = {
+        "column_headers": [notice_type.display for notice_type in notice_types],
+        "rows": settings_table,
+    }
+
+    return render_to_response("notification/observation_settings.html", {
+        "notice_types": notice_types,
+        "notice_settings": notice_settings,
+    }, context_instance=RequestContext(request))
