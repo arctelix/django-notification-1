@@ -147,8 +147,7 @@ def single(request, id, mark_seen=True):
         }, context_instance=RequestContext(request))
     raise Http404
     
-#@login_required forces user to log in when linke accessed by email, even when already logged in.
-#returning 404 if request.user == notice.recipient test fails is sufficient security.
+@login_required
 def view_sender(request, id, sender_url=None, mark_seen=True):
     """
     Use in a template to generate a link to the sender's url and mark the notice as seen.
