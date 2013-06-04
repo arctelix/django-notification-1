@@ -80,7 +80,9 @@ def sender_to_link(desc, sender, url, observed=None, allnames=None):
     NOTIFICATION_CONTENT_TYPE_TRANSLATIONS:provide a dictionary of content_type to key_word
     translations for make_link.
     IE: if your key_word variable is content_type, in this example user is the 
-    content_type and your email refers to users as "blogger" {'user':'blogger'}
+    content_type and your email refers to users as "blogger" {'user':['blogger',None}
+    IE: if your key_word variable is content_type, in this example user is the 
+    content_type the path used to access users is /prifiles/ {'user':[None,'/prifiles/'}}
 
     NOTIFICATION_OTHER_KEY_WORDS: Dictionary of other key words to make url's for.
     IE: if you want to replace "you" with a url pointing the the user's profile, sepcify
@@ -100,10 +102,13 @@ def sender_to_link(desc, sender, url, observed=None, allnames=None):
     sender_names = getattr(settings, 'NOTIFICATION_CHECK_FOR_SENDER_NAMES', {})
     other_key_words = getattr(settings, 'NOTIFICATION_OTHER_KEY_WORDS', {})
     desc = str(desc)
+    
     #check for translations
-    sender_type = map.get(sender_type, sender_type)
-    
-    
+    sender_map = map.get(sender_type, [None,None])
+    path = sender_map[1] or ''
+    if path: url = url+path+str(sender.id)+'/'
+    sender_type = sender_map[0] or sender_type
+
     #check for sender_type
     if sender_type in desc:
         link = '<a href="'+url+'">'+sender_type.title()+'</a>'
@@ -150,7 +155,6 @@ def convert_to_observed_description(desc, sender_type, from_user, owner):
     '''
     if sender_type in desc:
         owner_name = str(owner).title()+"'s "
-        print from_user, owner
         if from_user == owner:
             owner_name = 'their '
         #desc = desc.replace('has', 'has also')

@@ -181,7 +181,7 @@ def view_sender(request, id, sender_url=None, mark_seen=True):
             try:
                 resolve(sender_url)
             except:
-                print 'notifications.views.view_sender: no valid url'
+                print '***notifications.views.view_sender: not valid url: ', sender_url
                 raise Http404
         
         return HttpResponseRedirect(sender_url)
@@ -409,12 +409,10 @@ def observation_settings(request, content_type_name=None):
     for observed in observations_u:
         settings_row = []
         observed_set = observations.filter(content_type=observed[0], user=observed[1], object_id=observed[2])
-        print observed_set
         for notice_type in notice_types:
             try:
                 qs = observed_set.filter(notice_type=notice_type)
                 observed_obj = qs[0]
-                print observed_obj, notice_type, observed_obj.id
                 form_label = "%s_%s" % (notice_type.label, observed_obj.id)
                 send = observed_obj.send
                 if request.method == "POST":

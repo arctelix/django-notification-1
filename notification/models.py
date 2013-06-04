@@ -290,7 +290,6 @@ class Observation(models.Model):
                 extra_context = {}
             if not sender:
                 sender = self.observed_object
-                #test in template before using 
                 extra_context.update({"alter_desc":True})
             extra_context.update({"observed": self.observed_object})
             send([self.user],
