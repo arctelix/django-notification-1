@@ -15,7 +15,10 @@ class NoticeSettingAdmin(admin.ModelAdmin):
 class NoticeAdmin(admin.ModelAdmin):
     list_display = ["id", "recipient", "sender", "notice_type", "data", "added", "unseen", "archived"]
 
+class ObservationAdmin(admin.ModelAdmin):
+    list_display = ["id", "content_type", "object_id", "observed_object", "user", "notice_type"]
+
 admin.site.register(NoticeType, NoticeTypeAdmin)
 admin.site.register(NoticeSetting, NoticeSettingAdmin)
 admin.site.register(Notice, NoticeAdmin)
-admin.site.register(Observation)
+admin.site.register(Observation, ObservationAdmin)

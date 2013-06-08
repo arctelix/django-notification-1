@@ -9,6 +9,8 @@ from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.core.signing import Signer
 from django.core.urlresolvers import resolve
+from django.dispatch import receiver
+from django.db.models.signals import pre_delete
 
 # Django Apps
 from django.contrib.sites.models import Site
@@ -296,13 +298,12 @@ class Observation(models.Model):
                  self.notice_type.label,
                  extra_context,
                  sender=sender)
-        
+
     class Meta:
         ordering = ["-added"]
         verbose_name = _("observed item")
         verbose_name_plural = _("observed items")
-
-
+        
 def observe(observed, observer, labels):
     '''
     Create a new Observation
@@ -378,3 +379,15 @@ def get_observations(observer, observed_type, labels):
                                             content_type=content_type):
             elements.add(x.observed_object)
     return list(elements)
+
+#Delete observation objects when observed_object is deleted
+content_types = Observation.objects.values('content_type__id').distinct()
+content_types = set([c['content_type__id'] for c in content_types])
+@receiver(pre_delete)
+def observed_object_delete_handler(sender, *args, **kwargs):
+    content_type = ContentType.objects.get_for_model(sender)
+    if content_type.id in content_types:
+        target = kwargs.pop('instance', None)
+        observations = Observation.objects.filter(content_type=content_type, object_id=target.id)
+        for o in observations:
+            o.delete()
