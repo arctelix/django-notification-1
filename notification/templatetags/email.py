@@ -97,41 +97,43 @@ def sender_to_link(desc, sender, url, observed=None, allnames=None):
       If you want to seach for sender.user sepcify 'user'.
     - url output: path to the name object's id '/url_path/name_obj.id/'
     '''
-    sender_type = ContentType.objects.get_for_model(sender).name
     map = getattr(settings, 'NOTIFICATION_CONTENT_TYPE_TRANSLATIONS', {})
     sender_names = getattr(settings, 'NOTIFICATION_CHECK_FOR_SENDER_NAMES', {})
     other_key_words = getattr(settings, 'NOTIFICATION_OTHER_KEY_WORDS', {})
-    desc = str(desc)
-    
-    #check for translations
-    sender_map = map.get(sender_type, [None,None])
-    path = sender_map[1] or ''
-    if path: url = url+path+str(sender.id)+'/'
-    sender_type = sender_map[0] or sender_type
+    try:
+        sender_type = ContentType.objects.get_for_model(sender).name
+        desc = str(desc)
+        
+        #check for translations
+        sender_map = map.get(sender_type, [None,None])
+        path = sender_map[1] or ''
+        if path: url = url+path+str(sender.id)+'/'
+        sender_type = sender_map[0] or sender_type
 
-    #check for sender_type
-    if sender_type in desc:
-        link = '<a href="'+url+'">'+sender_type.title()+'</a>'
-        desc = link.join(desc.split(sender_type))
-    
-    #also check for the sender's name if allnames=True or if sender_type in sender_names
-    if allnames and sender_type not in sender_names:
-        #add current sender name to list
-        sender_names.update({sender_type:['self','/'+sender_type+'/']})
-    if allnames or allnames == None and sender_type in sender_names:
-        type = sender_names[sender_type]
-        url_path = type[1]
-        name_property = type[0] or 'self'
-        sender_name_obj = getattr(sender, name_property, sender)
-        sender_name = str(sender_name_obj)
-        #set up id for url
-        id = str(getattr(sender_name_obj,'id', ''))
-        if id: id = id+'/'
-        if sender_name.lower() in desc.lower():
-            link = '<a href="'+url_path+id+'">'+sender_name.title()+'</a>'
-            desc = link.join(desc.split(sender_name.lower()))
-            desc = link.join(desc.split(sender_name.title()))
-                
+        #check for sender_type
+        if sender_type in desc:
+            link = '<a href="'+url+'">'+sender_type.title()+'</a>'
+            desc = link.join(desc.split(sender_type))
+        
+        #also check for the sender's name if allnames=True or if sender_type in sender_names
+        if allnames and sender_type not in sender_names:
+            #add current sender name to list
+            sender_names.update({sender_type:['self','/'+sender_type+'/']})
+        if allnames or allnames == None and sender_type in sender_names:
+            type = sender_names[sender_type]
+            url_path = type[1]
+            name_property = type[0] or 'self'
+            sender_name_obj = getattr(sender, name_property, sender)
+            sender_name = str(sender_name_obj)
+            #set up id for url
+            id = str(getattr(sender_name_obj,'id', ''))
+            if id: id = id+'/'
+            if sender_name.lower() in desc.lower():
+                link = '<a href="'+url_path+id+'">'+sender_name.title()+'</a>'
+                desc = link.join(desc.split(sender_name.lower()))
+                desc = link.join(desc.split(sender_name.title()))
+    except:
+        sender_type = None           
     #also check for other key words
     for key_word in other_key_words:
         if key_word != sender_type:

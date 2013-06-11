@@ -380,14 +380,37 @@ def get_observations(observer, observed_type, labels):
             elements.add(x.observed_object)
     return list(elements)
 
-#Delete observation objects when observed_object is deleted
-content_types = Observation.objects.values('content_type__id').distinct()
-content_types = set([c['content_type__id'] for c in content_types])
-@receiver(pre_delete)
-def observed_object_delete_handler(sender, *args, **kwargs):
-    content_type = ContentType.objects.get_for_model(sender)
-    if content_type.id in content_types:
-        target = kwargs.pop('instance', None)
-        observations = Observation.objects.filter(content_type=content_type, object_id=target.id)
-        for o in observations:
-            o.delete()
+'''
+OBSRVATION_AUTO_DELETE( = True) delte all observations for an observed_object
+when the observed_object is deleted.  That way you will not have to make seperate handlers for
+removal of observations.
+
+OBSRVATION_DELETE_CONTENT_TYPES( = {}) specify additiaonl content types that when deleted require
+an observation to be deleted. IE: {'content_type name':'attribute name of delted object'}
+
+'''
+auto_del_observations = getattr(settings, 'OBSRVATION_AUTO_DELETE',True)
+if auto_del_observations:
+    #observation objects to delte when the observed_object is deleted
+    content_types = Observation.objects.values('content_type__name').distinct()
+    content_types = set([c['content_type__name'] for c in content_types])
+    #observation objects to delte when other content types are delteded
+    other_cts = getattr(settings, 'OBSRVATION_DELETE_CONTENT_TYPES',{})
+
+    @receiver(pre_delete)
+    def observed_object_delete_handler(sender, *args, **kwargs):
+        content_type = ContentType.objects.get_for_model(sender)
+        #Delete observations for deleted observation_objects
+        if content_type.name in content_types:
+            target = kwargs.pop('instance', None)
+            observations = Observation.objects.filter(content_type=content_type, object_id=target.id)
+            for o in observations:
+                o.delete()
+        #Delete observations for deleted other_cts
+        if content_type.name in other_cts:
+            target = kwargs.pop('instance', None)
+            obj = getattr(target,other_cts[content_type.name])
+            content_type = ContentType.objects.get_for_model(obj)
+            observations = Observation.objects.filter(content_type=content_type, object_id=obj.id)
+            for o in observations:
+                o.delete()
