@@ -425,7 +425,7 @@ def observation_settings(request, content_type_name=None):
                             observed_obj.send = False
                             changed = True
                             observed_obj.save()
-                settings_row.append((form_label, observed_obj.send))
+                settings_row.append((form_label, observed_obj.send, notice_type.display))
             except:
                 settings_row.append((False, False))
         settings_table.append({"observed": observed_obj, "cells": settings_row})
