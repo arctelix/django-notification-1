@@ -344,11 +344,14 @@ def send_observation_notices_for(observed, label, xcontext=None, exclude=None, s
     '''
     xcontext = xcontext or {}
     exclude = exclude or []
-
+    sent = []
     observations = Observation.objects.observers(observed, label)
     for observation in observations:
         if observation.user not in exclude:
             observation.send_notice(xcontext, sender=sender)
+            sent.append(observation.user)
+    # Return list of recipiants for exclusion from additional notifications.
+    return sent
 
 
 def is_observing(observed, observer, labels):
