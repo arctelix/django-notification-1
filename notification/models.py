@@ -389,7 +389,8 @@ when the observed_object is deleted.  That way you will not have to make seperat
 removal of observations.
 
 OBSRVATION_DELETE_CONTENT_TYPES( = {}) specify additiaonl content types that when deleted require
-an observation to be deleted. IE: {'content_type name':'attribute name of delted object'}
+an observation to be deleted. IE: {'content_type name':[list of attribute names pointing to the object]}
+                              IE: {'follow':['followed', 'favorited']}
 
 '''
 auto_del_observations = getattr(settings, 'OBSRVATION_AUTO_DELETE',True)
@@ -412,8 +413,10 @@ if auto_del_observations:
         #Delete observations for deleted other_cts
         if content_type.name in other_cts:
             target = kwargs.pop('instance', None)
-            obj = getattr(target,other_cts[content_type.name])
-            content_type = ContentType.objects.get_for_model(obj)
-            observations = Observation.objects.filter(content_type=content_type, object_id=obj.id)
-            for o in observations:
-                o.delete()
+            for attribute in other_cts[content_type.name]:
+                obj = getattr(target, attribute, None)
+                if obj:
+                    content_type = ContentType.objects.get_for_model(obj)
+                    observations = Observation.objects.filter(content_type=content_type, object_id=obj.id)
+                    for o in observations:
+                        o.delete()
