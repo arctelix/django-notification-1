@@ -11,6 +11,7 @@ from django.core.signing import Signer
 from django.core.urlresolvers import resolve
 from django.dispatch import receiver
 from django.db.models.signals import pre_delete
+from django.db.models.query import QuerySet
 
 # Django Apps
 from django.contrib.sites.models import Site
@@ -18,7 +19,13 @@ from django.contrib.sites.models import Site
 # This app
 from notification import backends
 
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 QUEUE_ALL = getattr(settings, "NOTIFICATION_QUEUE_ALL", False)
+THREAD_SEND_NOW = getattr(settings, "NOTIFICATION_THREAD_SEND_NOW", True)
 current_site = Site.objects.get_current()
 root_url = "http://%s" % unicode(current_site)
 
@@ -177,6 +184,7 @@ def get_sender_path(extra_context, sender):
                 sender_path = ""
         return sender_path  
 
+import threading
 def send(*args, **kwargs):
     """
     A basic interface around both queue and send_now. This honors a global
@@ -189,13 +197,21 @@ def send(*args, **kwargs):
     assert not (queue_flag and now_flag), "'queue' and 'now' cannot both be True."
     if queue_flag:
         return queue(*args, **kwargs)
-    elif now_flag:
-        return send_now(*args, **kwargs)
     else:
         if QUEUE_ALL:
             return queue(*args, **kwargs)
         else:
-            return send_now(*args, **kwargs)
+            now_flag = True
+            
+    if now_flag and THREAD_SEND_NOW:
+        print '-threading'
+        t = threading.Thread(target=send_now(*args, **kwargs), args=[None])
+        # We want the program to wait on this thread before shutting down.
+        t.setDaemon(False)
+        t.start()
+        return 'sending'
+    else:
+        return send_now(*args, **kwargs)
 
 class NoticeQueueBatch(models.Model):
     """
@@ -280,7 +296,7 @@ def send_now(users, label, extra_context=None, sender=None):
         
         #add context that we did not want to get saved in website db
         extra_context.update(context)
-        
+            
         for backend in NOTIFICATION_BACKENDS.values():
             if backend.can_send(user, notice_type) and backend != website:
                 backend.deliver(user, sender, notice_type, extra_context)
@@ -462,7 +478,6 @@ if auto_del_observations:
             target = kwargs.pop('instance', None)
             for attribute in other_cts[content_type.name]:
                 obj = getattr(target, attribute, None)
-                print 'obj =', obj
                 if obj:
                     content_type = ContentType.objects.get_for_model(obj)
                     observations = Observation.objects.filter(content_type=content_type, object_id=obj.id)

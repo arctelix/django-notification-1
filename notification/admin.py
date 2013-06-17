@@ -2,7 +2,7 @@
 from django.contrib import admin
 
 # This app
-from notification.models import NoticeType, NoticeSetting, Observation
+from notification.models import NoticeType, NoticeSetting, Observation, NoticeQueueBatch
 #FIXME dinamically import classes of the type ModelAdmin and register them here
 from notification.backends.website import Notice
 
@@ -22,3 +22,4 @@ admin.site.register(NoticeType, NoticeTypeAdmin)
 admin.site.register(NoticeSetting, NoticeSettingAdmin)
 admin.site.register(Notice, NoticeAdmin)
 admin.site.register(Observation, ObservationAdmin)
+admin.site.register(NoticeQueueBatch)

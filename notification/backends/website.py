@@ -67,7 +67,7 @@ class Notice(models.Model):
     '''
     recipient = models.ForeignKey(User, verbose_name=_("recipient"))
     notice_type = models.ForeignKey(NoticeType, verbose_name=_("notice type"))
-    added = models.DateTimeField(_("added"))
+    added = models.DateTimeField(_("added"), auto_now_add=True)
     unseen = models.BooleanField(_("unseen"), default=True)
     archived = models.BooleanField(_("archived"), default=False)
 
@@ -192,5 +192,4 @@ class WebsiteBackend(backends.BaseBackend):
         Notice.objects.create(recipient=recipient,
                               sender=sender,
                               data=extra_context,
-                              added= datetime.now(),
                               notice_type=notice_type)
