@@ -1,6 +1,6 @@
-===================
-django-notification
-===================
+=============================
+django-notification-automated
+=============================
 
 Many sites need to notify users when certain events have occurred and to allow
 configurable options as to how those notifications are to be received.
@@ -8,6 +8,36 @@ configurable options as to how those notifications are to be received.
 The project aims to provide a Django app for this sort of functionality. This
 includes:
 
- * Submission of notification messages by other apps.
- * Notification messages on signing in.
- * Notification messages via email (configurable by user).
+ * Submission of notification messages by other apps & objects.
+ * Automated Notification settings view.
+ * Automated Notification settings view for each type of observed object.
+ * Automated Notification messages with Automated hyperlink integration.
+ * Automated Notification message modifiaction for observed objects.
+ * Optional Notification Queueing.
+ * Optional Notification Treading.
+ * Pluggable backends (configureable by user):
+   - Notification messages via website.
+   - Notification messages via email.
+
+   
+The MIT License (MIT)
+
+Copyright (c) Arctelix and all prior contributors.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
