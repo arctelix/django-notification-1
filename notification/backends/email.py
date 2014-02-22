@@ -29,7 +29,7 @@ class EmailBackend(backends.BaseBackend):
         
         short = backends.format_notification("short.txt",
                                              notice_type.label,
-                                             context).rstrip('\n')
+                                             context).rstrip('\n').rstrip('\r')
 
         message_txt = backends.format_notification("full.txt",
                                                    notice_type.label,
@@ -46,7 +46,7 @@ class EmailBackend(backends.BaseBackend):
         context.autoescape = False
         subject = render_to_string(("notification/email_subject.txt",
                                     "notification/default/email_subject.txt"),
-                                  {"message": short}, context).rstrip('\n')
+                                  {"message": short}, context).rstrip('\n').rstrip('\r')
         body_txt = render_to_string(("notification/default/email_body.txt",
                                      "notification/email_body.html"),
                                     {"message": message_txt}, context)
