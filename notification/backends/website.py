@@ -56,9 +56,16 @@ class NoticeManager(models.Manager):
         """
         return self.notices_for(recipient, unseen=True, **kwargs).count()
 
-#constants for sender url
-current_site = Site.objects.get_current()
-root_url = "http://%s" % unicode(current_site)
+
+# prevent error on initial syncdb for apps that incorporate django-notification-automated
+try:
+    #constants for sender url
+    current_site = Site.objects.get_current()
+    root_url = "http://%s" % unicode(current_site)
+except:
+    from django.db import connection
+    connection.close()
+
 
 
 class Notice(models.Model):

@@ -26,8 +26,15 @@ except ImportError:
 
 QUEUE_ALL = getattr(settings, "NOTIFICATION_QUEUE_ALL", False)
 THREAD_SEND_NOW = getattr(settings, "NOTIFICATION_THREAD_SEND_NOW", True)
-current_site = Site.objects.get_current()
-root_url = "http://%s" % unicode(current_site)
+
+# prevent error on initial syncdb for apps that incorporate django-notification-automated
+try:
+    current_site = Site.objects.get_current()
+    root_url = "http://%s" % unicode(current_site)
+except:
+    from django.db import connection
+    connection.close()
+
 
 class NoticeType(models.Model):
     '''
