@@ -465,11 +465,16 @@ an observation to be deleted. IE: {'content_type name':[list of attribute names 
 '''
 auto_del_observations = getattr(settings, 'OBSRVATION_AUTO_DELETE',True)
 if auto_del_observations:
-    #observation objects to delte when the observed_object is deleted
-    content_types = Observation.objects.values('content_type__name').distinct()
-    content_types = set([c['content_type__name'] for c in content_types])
-    #observation objects to delte when other content types are delteded
-    other_cts = getattr(settings, 'OBSRVATION_DELETE_CONTENT_TYPES',{})
+    #prevent syncdb error on new databases
+    try:
+        #observation objects to delte when the observed_object is deleted
+        content_types = Observation.objects.values('content_type__name').distinct()
+        content_types = set([c['content_type__name'] for c in content_types])
+        #observation objects to delte when other content types are delteded
+        other_cts = getattr(settings, 'OBSRVATION_DELETE_CONTENT_TYPES',{})
+    except:
+        from django.db import connection
+        connection.close()
 
     @receiver(pre_delete)
     def observed_object_delete_handler(sender, *args, **kwargs):

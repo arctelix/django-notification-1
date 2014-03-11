@@ -2,7 +2,7 @@ from django.conf import settings
 from django.db.models import signals
 from django.utils.translation import ugettext_noop as _
 
-notice_types = getattr(settings, 'NOTICE_TYPES', None)
+notice_types = getattr(settings, 'NOTICE_TYPES', [])
 def create_notice_types():
     for type in notice_types:
         notification.create_notice_type(type[0],_(type[1]), _(type[2]))
