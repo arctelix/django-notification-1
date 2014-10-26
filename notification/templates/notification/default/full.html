@@ -16,20 +16,21 @@
 	"notice_id": self.id?False,-->
 <!--EXTRA CONTEXT:
 	"from_user":user,
+	"owner":user,
 	"sender_url": root_url+sender_url, -->
-<!--{% load email %}: load email tempaltetags (you muust install in your templatetags)
-	{% dev_static_prefix as DEV_STATIC_PREFIX %}: returns url to static host when STATIC_URL 
-    is defined as a path (this is required to get working urls to images in your email template. 
+<!--{% load email %}: load email template tags (you must install in your templatetags)
+	{% dev_static_prefix as DEV_STATIC_PREFIX %}: returns url to static host when STATIC_URL
+    is defined as a path (this is required to get working urls to images in your email template.
 	{% header_generic %} inserts header
 	{% footer_generic %} inserts footer
-	{% make_link string "key_word" "url" %} convert's a key_work in a string to a hyperlink with the provided url.
-	{% observed_desc notice.description sender_type sender_url as desc %} Convert a notice description to an observed description-->
+	{% make_link string "key_word" "url" %} converts a key_work in a string to a hyperlink with the provided url.
+	{% observed_desc notice.description sender_type sender_url owner as desc %} Convert a notice description to an observed description-->
 {% endcomment %}
 {% load i18n %}
 {% load email %}
 <a href="{{root_url}}">{{from_user|capfirst}}</a>
 {% if observed and alter_desc %}
-	{% observed_desc notice.description sender_type from_user as desc%}
+	{% observed_desc notice.description sender_type from_user owner as desc%}
 	{% sender_to_link desc sender sender_url %}
 {% else %}
 	{% sender_to_link notice.description sender sender_url %}

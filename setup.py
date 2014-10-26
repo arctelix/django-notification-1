@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="django-notification",
+    name="django-notification-automated",
     description="User notification management for the Django web framework",
     long_description=open("docs/usage.txt").read(),
-    url="https://github.com/wladston/django-notification-1",
+    url="https://github.com/arctelix/django-notification-automated",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
