@@ -39,7 +39,7 @@ def dev_static_prefix():
         try:
             host_ip = socket.gethostbyname(socket.gethostname())
         except:
-            host_ip = localhost
+            host_ip = 'localhost'
         port = getattr(settings, 'EMAIL_STATIC_HOST_PORT', '8000')
         static_prefix = 'http://'+host_ip+':'+port
     return static_prefix

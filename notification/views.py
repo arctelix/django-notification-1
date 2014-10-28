@@ -1,12 +1,13 @@
 # Python Core
 from datetime import datetime, timedelta
+import json
 
 # Django
 from django.core.urlresolvers import reverse
 from django.core.signing import Signer, BadSignature
 from django.contrib.auth.models import User
 from django.shortcuts import render_to_response, get_object_or_404, render
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.template import RequestContext
 from django.db.models import Q
 from django.contrib import messages
@@ -78,6 +79,7 @@ def notice_settings(request):
     notice_types = NoticeType.objects.all()
     settings_table = []
     changed = False
+    settings_data = []
     for notice_type in notice_types:
         settings_row = []
         for medium_id, medium_display in NOTICE_MEDIA:
@@ -86,6 +88,7 @@ def notice_settings(request):
                                                notice_type,
                                                medium_id)
             if request.method == "POST":
+                print form_label, request.POST.get(form_label, "not_found")
                 if request.POST.get(form_label) == "on":
                     if not setting.send:
                         setting.send = True
@@ -100,6 +103,7 @@ def notice_settings(request):
         #use to determin if a notice_type is from the system or a system user
         notice_type.is_system = notice_type.label.find('system')+1
         settings_table.append({"notice_type": notice_type, "cells": settings_row})
+        settings_data.append({"notice_type": notice_type.label, "cells": settings_row})
 
     if changed:
         messages.add_message(request, messages.INFO, "Notification settings updated.")
@@ -112,6 +116,9 @@ def notice_settings(request):
         "column_headers": [medium_display for medium_id, medium_display in NOTICE_MEDIA],
         "rows": settings_table,
     }
+    if request.is_ajax():
+        return HttpResponse(json.dumps(settings_data),
+                            content_type='application/json')
 
     return render_to_response("notification/notice_settings.html", {
         "notice_types": notice_types,

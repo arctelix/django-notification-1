@@ -59,6 +59,7 @@ class NoticeType(models.Model):
 # XXX These lines must come AFTER NoticeType is defined
 # key is a tuple (medium_id, backend_label)
 NOTIFICATION_BACKENDS = backends.load_backends()
+print NOTIFICATION_BACKENDS
 NOTICE_MEDIA = [key for key in NOTIFICATION_BACKENDS.keys()]
 NOTICE_MEDIA_DEFAULTS = {key[0]: backend.spam_sensitivity for key, backend in
                                                  NOTIFICATION_BACKENDS.items()}
@@ -112,6 +113,7 @@ class NoticeSetting(models.Model):
         verbose_name = _("notice setting")
         verbose_name_plural = _("notice settings")
         unique_together = ("user", "notice_type", "medium")
+
 
 
 def get_notification_setting(user, notice_type, medium):

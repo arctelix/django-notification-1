@@ -32,6 +32,9 @@ See the docs for installation help and all base django-notification features.
 No need to mess with management files in this version, its automated!  
 
     NOTICE_TYPES = [("commented","New Comment", "has commented on your pin"),]
+Then run the management command to updated them as required:
+
+    python manage.py update_notice_types
 ***Automation Note:***
 Notice descriptions should take the form "has ***action*** on your ***object***" where the object = content_type.name. The resulting notification will look like 
 ***Username*** has commented on your ***object***.  Username & object will be converted to hyperlinks and clicking the object link will mark the notice as seen.
@@ -67,7 +70,7 @@ IE: Given content_object.name = "object" will delete the object object.propery1 
 This is not required if you use the automated features but feasible in certain cases.  
 ####7. Display the notifications to the user:  
 Provide links to all the views provided.  
-####8. The code is heavily commented so please look thoght the code for more information.  
+####8. The code is heavily commented so please look through the code for more information.
    
 ## Example code:
 
