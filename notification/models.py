@@ -67,6 +67,8 @@ for key in NOTIFICATION_BACKENDS.keys():
     if key[1] == 'website':
         website = NOTIFICATION_BACKENDS[key]
         from notification.backends.website import Notice
+    else:
+        website = None
 
 def create_notice_type(label, display, description, default=2, verbosity=1):
     '''
