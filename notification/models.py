@@ -265,7 +265,7 @@ def send_now(users, label, extra_context=None, sender=None):
     current_language = get_language()
     extra_context = extra_context or {}
     notices_url = root_url + reverse("notification_notices")
-    notice_settings_url = root_url + reverse("notification_settings")
+    notice_settings_url = root_url + reverse("notification_notice_settings")
     sender_path = get_sender_path(extra_context, sender)
    
     for user in users:
