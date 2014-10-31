@@ -62,7 +62,7 @@ NOTIFICATION_BACKENDS = backends.load_backends()
 NOTICE_MEDIA = [key for key in NOTIFICATION_BACKENDS.keys()]
 NOTICE_MEDIA_DEFAULTS = {key[0]: backend.spam_sensitivity for key, backend in
                                                  NOTIFICATION_BACKENDS.items()}
-print 'NOTICE_MEDIA_DEFAULTS', NOTICE_MEDIA_DEFAULTS
+
 for key in NOTIFICATION_BACKENDS.keys():
     if key[1] == 'website':
         website = NOTIFICATION_BACKENDS[key]
